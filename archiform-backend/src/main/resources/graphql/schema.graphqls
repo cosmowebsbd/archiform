@@ -1,0 +1,339 @@
+enum UserRole     { OWNER ADMIN MEMBER }
+enum Industry     { ARCHITECTURE ENGINEERING INTERIOR_DESIGN LANDSCAPE URBAN_PLANNING NOT_LISTED }
+enum Plan         { TRIAL STARTER PROFESSIONAL ENTERPRISE }
+enum ProjectStatus{ DRAFT ACTIVE ON_HOLD COMPLETED ARCHIVED }
+enum PhaseStatus  { NOT_STARTED IN_PROGRESS COMPLETED }
+enum InvoiceStatus{ DRAFT SENT VIEWED PAID OVERDUE CANCELLED }
+
+type User {
+    id:         ID!
+    email:      String!
+    firstName:  String!
+    lastName:   String!
+    avatarUrl:  String
+    createdAt:  String!
+}
+
+type Firm {
+    id:             ID!
+    name:           String!
+    industry:       Industry!
+    employeeCount:  Int!
+    location:       String
+    plan:           Plan!
+    trialEndsAt:    String
+    logoUrl:        String
+    createdAt:      String!
+}
+
+type FirmMember {
+    id:        ID!
+    user:      User!
+    firm:      Firm!
+    role:      UserRole!
+    title:     String
+    isActive:  Boolean!
+}
+
+type Project {
+    id:           ID!
+    name:         String!
+    description:  String
+    status:       ProjectStatus!
+    category:     String
+    totalBudget:  Float!
+    spentAmount:  Float!
+    startDate:    String
+    endDate:      String
+    contact:      Contact
+    phases:       [Phase!]!
+    createdAt:    String!
+    updatedAt:    String!
+}
+
+type Phase {
+    id:            ID!
+    name:          String!
+    description:   String
+    status:        PhaseStatus!
+    budgetHours:   Float!
+    loggedHours:   Float!
+    budgetAmount:  Float!
+    spentAmount:   Float!
+    sortOrder:     Int!
+    startDate:     String
+    endDate:       String
+}
+
+type StaffMember {
+    id:                  ID!
+    user:                User!
+    title:               String
+    department:          String
+    hourlyRate:          Float!
+    targetUtilization:   Int!
+    isActive:            Boolean!
+    createdAt:           String!
+}
+
+type StaffAssignment {
+    id:              ID!
+    staff:           StaffMember!
+    project:         Project!
+    phase:           Phase
+    allocatedHours:  Float!
+    startDate:       String!
+    endDate:         String!
+}
+
+type TimeEntry {
+    id:          ID!
+    staff:       StaffMember!
+    project:     Project!
+    phase:       Phase
+    entryDate:   String!
+    hours:       Float!
+    description: String
+    isBillable:  Boolean!
+    createdAt:   String!
+}
+
+type Invoice {
+    id:             ID!
+    invoiceNumber:  String!
+    status:         InvoiceStatus!
+    project:        Project!
+    contact:        Contact
+    issueDate:      String!
+    dueDate:        String!
+    subtotal:       Float!
+    taxRate:        Float!
+    taxAmount:      Float!
+    total:          Float!
+    notes:          String
+    paidAt:         String
+    lineItems:      [InvoiceLineItem!]!
+    createdAt:      String!
+}
+
+type InvoiceLineItem {
+    id:          ID!
+    description: String!
+    quantity:    Float!
+    unitPrice:   Float!
+    amount:      Float!
+    isBillable:  Boolean!
+    sortOrder:   Int!
+}
+
+type Contact {
+    id:       ID!
+    name:     String!
+    email:    String
+    phone:    String
+    company:  String
+    city:     String
+    country:  String
+    notes:    String
+}
+
+type DashboardMetrics {
+    estimatedOperatingProfit:   Float
+    utilizationRate:            Float
+    projectedOperatingProfit:   Float
+    projectedFirmCapacity:      Float
+    revenueByMonth:             [MonthlyRevenue!]!
+}
+
+type MonthlyRevenue {
+    month:    String!
+    revenue:  Float!
+    expenses: Float!
+    profit:   Float!
+}
+
+type AuthPayload {
+    token:  String!
+    user:   User!
+    firm:   Firm!
+}
+
+type Query {
+    me:         User!
+    firm:       Firm!
+    dashboard:  DashboardMetrics!
+    projects(status: ProjectStatus): [Project!]!
+    project(id: ID!):                Project!
+    staff:                           [StaffMember!]!
+    staffMember(id: ID!):            StaffMember!
+    timeEntries(
+        projectId: ID
+        staffId:   ID
+        from:      String
+        to:        String
+    ): [TimeEntry!]!
+    invoices(status: InvoiceStatus): [Invoice!]!
+    invoice(id: ID!):                Invoice!
+    contacts:           [Contact!]!
+    contact(id: ID!):   Contact!
+}
+
+type Mutation {
+    register(input: RegisterInput!):  AuthPayload!
+    login(input: LoginInput!):        AuthPayload!
+
+    createProject(input: CreateProjectInput!):          Project!
+    updateProject(id: ID!, input: UpdateProjectInput!): Project!
+    deleteProject(id: ID!):                             Boolean!
+    addPhase(projectId: ID!, input: PhaseInput!):       Phase!
+    updatePhase(id: ID!, input: PhaseInput!):           Phase!
+
+    addStaffMember(input: AddStaffInput!):                        StaffMember!
+    updateStaffMember(id: ID!, input: UpdateStaffInput!):         StaffMember!
+    assignStaff(input: StaffAssignmentInput!):                    StaffAssignment!
+
+    logTime(input: TimeEntryInput!):                    TimeEntry!
+    updateTimeEntry(id: ID!, input: TimeEntryInput!):   TimeEntry!
+    deleteTimeEntry(id: ID!):                           Boolean!
+
+    createInvoice(input: CreateInvoiceInput!):              Invoice!
+    updateInvoiceStatus(id: ID!, status: InvoiceStatus!):   Invoice!
+    deleteInvoice(id: ID!):                                 Boolean!
+
+    createContact(input: ContactInput!):                Contact!
+    updateContact(id: ID!, input: ContactInput!):       Contact!
+    deleteContact(id: ID!):                             Boolean!
+
+    updateFirm(input: UpdateFirmInput!): Firm!
+    updateProfile(input: UpdateProfileInput!): User!
+    changePassword(input: ChangePasswordInput!): Boolean!
+}
+
+input RegisterInput {
+    email:           String!
+    password:        String!
+    firstName:       String!
+    lastName:        String!
+    firmName:        String!
+    industry:        Industry!
+    employeeCount:   Int!
+    location:        String
+    howDidYouHear:   String
+}
+
+input LoginInput {
+    email:    String!
+    password: String!
+}
+
+input CreateProjectInput {
+    name:         String!
+    description:  String
+    category:     String
+    totalBudget:  Float!
+    contactId:    ID
+    startDate:    String
+    endDate:      String
+}
+
+input UpdateProjectInput {
+    name:         String
+    description:  String
+    status:       ProjectStatus
+    category:     String
+    totalBudget:  Float
+    contactId:    ID
+    startDate:    String
+    endDate:      String
+}
+
+input PhaseInput {
+    name:          String!
+    description:   String
+    budgetHours:   Float!
+    budgetAmount:  Float!
+    startDate:     String
+    endDate:       String
+    sortOrder:     Int
+}
+
+input AddStaffInput {
+    email:              String!
+    firstName:          String!
+    lastName:           String!
+    title:              String
+    department:         String
+    hourlyRate:         Float!
+    targetUtilization:  Int
+    role:               UserRole
+}
+
+input UpdateStaffInput {
+    title:              String
+    department:         String
+    hourlyRate:         Float
+    targetUtilization:  Int
+}
+
+input StaffAssignmentInput {
+    staffId:        ID!
+    projectId:      ID!
+    phaseId:        ID
+    allocatedHours: Float!
+    startDate:      String!
+    endDate:        String!
+}
+
+input TimeEntryInput {
+    staffId:     ID!
+    projectId:   ID!
+    phaseId:     ID
+    entryDate:   String!
+    hours:       Float!
+    description: String
+    isBillable:  Boolean
+}
+
+input CreateInvoiceInput {
+    projectId:   ID!
+    contactId:   ID
+    issueDate:   String!
+    dueDate:     String!
+    taxRate:     Float
+    notes:       String
+    lineItems:   [LineItemInput!]!
+}
+
+input LineItemInput {
+    description: String!
+    quantity:    Float!
+    unitPrice:   Float!
+    isBillable:  Boolean
+}
+
+input ContactInput {
+    name:    String!
+    email:   String
+    phone:   String
+    company: String
+    city:    String
+    country: String
+    notes:   String
+}
+
+input UpdateFirmInput {
+  name: String!
+  industry: Industry!
+  employeeCount: Int!
+  location: String
+}
+
+input UpdateProfileInput {
+  firstName: String!
+  lastName: String!
+}
+
+input ChangePasswordInput {
+  currentPassword: String!
+  newPassword: String!
+}

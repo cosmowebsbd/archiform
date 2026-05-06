@@ -1,0 +1,30 @@
+# Maven
+target/
+*.class
+*.jar
+*.war
+
+# IDE
+.idea/
+*.iml
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets — never commit these
+application-local.properties
+application-prod.properties
+*.env
+
+# Spring Boot
+spring-shell.log

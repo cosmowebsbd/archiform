@@ -1,0 +1,252 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Google Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@layer base {
+  :root {
+    /* Design tokens */
+    --font-sans: 'DM Sans', system-ui, sans-serif;
+    --font-display: 'DM Serif Display', Georgia, serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Color system */
+    --background: 0 0% 100%;
+    --foreground: 224 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 47% 11%;
+
+    --primary: 250 75% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 47% 11%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 250 75% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 250 75% 60%;
+
+    --radius: 0.625rem;
+
+    /* Custom brand */
+    --brand-purple: #6c5ce7;
+    --brand-navy: #0e1628;
+    --brand-light: #f8f9fc;
+    --sidebar-width: 220px;
+    --topbar-height: 64px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+
+  h1, h2, h3, h4 {
+    @apply tracking-tight;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/30; }
+}
+
+@layer components {
+  /* ── Typography ── */
+  .heading-display {
+    font-family: var(--font-display);
+    @apply font-normal tracking-tight;
+  }
+
+  .heading-xl {
+    font-family: var(--font-display);
+    @apply text-5xl md:text-6xl lg:text-7xl font-normal tracking-tight leading-[1.05];
+  }
+
+  .heading-lg {
+    font-family: var(--font-display);
+    @apply text-3xl md:text-4xl lg:text-5xl font-normal tracking-tight leading-[1.1];
+  }
+
+  .heading-md {
+    font-family: var(--font-display);
+    @apply text-2xl md:text-3xl font-normal tracking-tight leading-[1.2];
+  }
+
+  /* ── Buttons ── */
+  .btn-brand {
+    @apply inline-flex items-center justify-center gap-2 
+           bg-brand-500 hover:bg-brand-600 
+           text-white font-medium 
+           px-6 py-3 rounded-lg 
+           transition-all duration-200 
+           hover:shadow-glow-sm hover:-translate-y-0.5
+           active:translate-y-0 active:shadow-none
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0;
+  }
+
+  .btn-brand-lg {
+    @apply btn-brand px-8 py-4 text-base rounded-xl;
+  }
+
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2
+           border border-border bg-background hover:bg-secondary
+           text-foreground font-medium
+           px-6 py-3 rounded-lg
+           transition-all duration-200
+           hover:-translate-y-0.5
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           text-muted-foreground hover:text-foreground hover:bg-secondary
+           font-medium px-4 py-2 rounded-lg
+           transition-all duration-200
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring;
+  }
+
+  /* ── Cards ── */
+  .card-base {
+    @apply bg-card border border-border rounded-xl;
+  }
+
+  .card-hover {
+    @apply card-base transition-all duration-300 
+           hover:shadow-card-hover hover:-translate-y-1;
+  }
+
+  /* ── Form inputs ── */
+  .input-base {
+    @apply w-full px-4 py-3 
+           bg-background border border-border rounded-lg
+           text-foreground placeholder:text-muted-foreground
+           text-sm font-medium
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+           hover:border-brand-300;
+  }
+
+  .label-base {
+    @apply block text-sm font-medium text-foreground mb-1.5;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar-item {
+    @apply flex flex-col items-center justify-center gap-1
+           w-full py-3 px-2 rounded-lg
+           text-white/50 hover:text-white hover:bg-white/10
+           transition-all duration-200 cursor-pointer
+           text-[10px] font-medium;
+  }
+
+  .sidebar-item.active {
+    @apply text-white bg-white/15;
+  }
+
+  /* ── Badges ── */
+  .badge-new {
+    @apply inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold
+           bg-brand-500 text-white tracking-wide;
+  }
+
+  /* ── Section patterns ── */
+  .section-dot-bg {
+    background-image: radial-gradient(circle, rgba(108,92,231,0.12) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .section-grid-bg {
+    background-image: 
+      linear-gradient(rgba(108,92,231,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,92,231,0.06) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  /* ── Gradient text ── */
+  .gradient-text {
+    @apply bg-gradient-to-r from-brand-500 via-brand-400 to-purple-400 
+           bg-clip-text text-transparent;
+  }
+
+  /* ── Stat counter ── */
+  .stat-number {
+    font-family: var(--font-display);
+    @apply text-4xl md:text-5xl font-normal text-brand-500;
+  }
+
+  /* ── App layout ── */
+  .app-sidebar {
+    width: var(--sidebar-width);
+    @apply fixed left-0 top-0 bottom-0 z-40
+           bg-navy-950 flex flex-col
+           border-r border-white/5;
+  }
+
+  .app-main {
+    margin-left: var(--sidebar-width);
+    @apply min-h-screen bg-[#f4f5f9];
+  }
+
+  .app-topbar {
+    height: var(--topbar-height);
+    @apply sticky top-0 z-30 
+           bg-white border-b border-border
+           flex items-center px-6;
+  }
+
+  /* ── KPI Card ── */
+  .kpi-card {
+    @apply bg-white border border-border rounded-xl p-6
+           hover:shadow-md transition-shadow duration-200;
+  }
+
+  /* ── Filter chip ── */
+  .filter-chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 
+           bg-secondary border border-border rounded-lg
+           text-sm font-medium text-foreground
+           hover:bg-accent/10 cursor-pointer
+           transition-colors duration-150;
+  }
+
+  /* ── Animations ── */
+  .animate-delay-100 { animation-delay: 100ms; }
+  .animate-delay-200 { animation-delay: 200ms; }
+  .animate-delay-300 { animation-delay: 300ms; }
+  .animate-delay-400 { animation-delay: 400ms; }
+  .animate-delay-500 { animation-delay: 500ms; }
+  .animate-delay-600 { animation-delay: 600ms; }
+  .animate-delay-700 { animation-delay: 700ms; }
+  .animate-delay-800 { animation-delay: 800ms; }
+}
