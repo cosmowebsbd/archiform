@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, X, FileText, DollarSign } from 'lucide-react'
+import { Plus, X, FileText, DollarSign, Download } from 'lucide-react'
 import { gql } from '@apollo/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,7 @@ import { apolloClient } from '@/lib/apollo-client'
 import { cn, formatCurrency } from '@/lib/utils'
 import { formatDate } from '@/lib/date-utils'
 import { SkeletonTable } from '@/components/ui/skeleton'
+
 
 const GET_INVOICES = gql`
   query {
@@ -276,6 +277,39 @@ export default function MoneyPage() {
       .catch(err => { console.error(err); setLoading(false) })
   }
 
+  const handleDownloadPdf = async (invoiceId: string, invoiceNumber: string) => {
+  try {
+    const token = localStorage.getItem('archiform_token')
+    const response = await fetch(
+      `http://localhost:8080/api/invoices/${invoiceId}/pdf`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      }
+    )
+
+    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(
+      new Blob([blob], { type: 'application/pdf' })
+    )
+    const link = document.createElement('a')
+    link.style.display = 'none'
+    link.href = url
+    link.setAttribute('download', `${invoiceNumber}.pdf`)
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('PDF download failed:', err)
+    alert('Failed to download PDF. Please try again.')
+  }
+}
+
   useEffect(() => { fetchData() }, [])
 
   const totalRevenue = invoices
@@ -393,50 +427,75 @@ export default function MoneyPage() {
                 {invoices.map((invoice, i) => {
                   const cfg = statusConfig[invoice.status] || statusConfig.DRAFT
                   return (
-                    <tr key={invoice.id}
-                      className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+                    <tr
+                      key={invoice.id}
+                      className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
+                    >
                       <td className="px-4 py-3 text-sm font-medium text-navy-900">
                         {invoice.invoiceNumber}
                       </td>
                       <td className="px-4 py-3 text-sm text-navy-900">
-                        {invoice.project?.name || '—'}
+                        {invoice.project?.name || "—"}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {invoice.contact?.name || '—'}
+                        {invoice.contact?.name || "—"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{formatDate(invoice.issueDate)}</td>
-                       <td className="px-4 py-3 text-sm text-muted-foreground">{formatDate(invoice.dueDate)}</td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {formatDate(invoice.issueDate)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {formatDate(invoice.dueDate)}
+                      </td>
                       <td className="px-4 py-3 text-sm font-semibold text-navy-900">
                         {formatCurrency(invoice.total)}
                       </td>
                       <td className="px-4 py-3">
-                        <span className={cn(
-                          'text-xs font-semibold px-2 py-0.5 rounded-full',
-                          cfg.bg, cfg.color
-                        )}>
+                        <span
+                          className={cn(
+                            "text-xs font-semibold px-2 py-0.5 rounded-full",
+                            cfg.bg,
+                            cfg.color,
+                          )}
+                        >
                           {cfg.label}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {invoice.status === 'DRAFT' && (
+                          {invoice.status === "DRAFT" && (
                             <button
-                              onClick={() => updateStatus(invoice.id, 'SENT')}
-                              className="text-xs text-brand-500 hover:underline font-medium">
+                              onClick={() => updateStatus(invoice.id, "SENT")}
+                              className="text-xs text-brand-500 hover:underline font-medium"
+                            >
                               Send
                             </button>
                           )}
-                          {invoice.status === 'SENT' && (
+                          {invoice.status === "SENT" && (
                             <button
-                              onClick={() => updateStatus(invoice.id, 'PAID')}
-                              className="text-xs text-green-600 hover:underline font-medium">
+                              onClick={() => updateStatus(invoice.id, "PAID")}
+                              className="text-xs text-green-600 hover:underline font-medium"
+                            >
                               Mark Paid
                             </button>
                           )}
+                          <button
+                            onClick={() =>
+                              handleDownloadPdf(
+                                invoice.id,
+                                invoice.invoiceNumber,
+                              )
+                            }
+                            className="text-xs text-brand-500 hover:text-brand-600
+                            font-medium flex items-center gap-1"
+                            title="Download PDF"
+                          >
+                            <Download className="w-3 h-3" />
+                            PDF
+                          </button>
                         </div>
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>

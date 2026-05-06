@@ -49,7 +49,10 @@ const ADD_STAFF = gql`
   }
 `
 
-function AddStaffModal({ onClose, onAdded }: { onClose: () => void; onAdded: () => void }) {
+function AddStaffModal({ onClose, onAdded }: {
+  onClose: () => void
+  onAdded: () => void
+}) {
   const [form, setForm] = useState({
     email: '', firstName: '', lastName: '',
     title: '', department: '', hourlyRate: '', targetUtilization: '80',
@@ -108,7 +111,6 @@ function AddStaffModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
             <X className="w-4 h-4 text-gray-500" />
           </button>
         </div>
-
         <form onSubmit={handleSubmit} className="p-6 space-y-4" noValidate>
           <div className="grid grid-cols-2 gap-4">
             <Input label="First name *" value={form.firstName}
@@ -122,18 +124,18 @@ function AddStaffModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
             <Input label="Title" placeholder="e.g. Senior Designer"
               value={form.title} onChange={e => set('title', e.target.value)} />
             <Input label="Department" placeholder="e.g. Design"
-              value={form.department} onChange={e => set('department', e.target.value)} />
+              value={form.department}
+              onChange={e => set('department', e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <Input label="Hourly rate ($) *" type="number" placeholder="e.g. 125"
-              value={form.hourlyRate} onChange={e => set('hourlyRate', e.target.value)} />
+              value={form.hourlyRate}
+              onChange={e => set('hourlyRate', e.target.value)} />
             <Input label="Target utilization (%)" type="number"
               placeholder="80" value={form.targetUtilization}
               onChange={e => set('targetUtilization', e.target.value)} />
           </div>
-
           {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
-
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit" loading={loading}>Add Staff Member</Button>
@@ -144,28 +146,154 @@ function AddStaffModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
   )
 }
 
+function InviteModal({ onClose, onInvited }: {
+  onClose: () => void
+  onInvited: () => void
+}) {
+  const [form, setForm] = useState({
+    email: '', firstName: '', role: 'MEMBER'
+  })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!form.email.trim()) { setError('Email is required'); return }
+    setLoading(true)
+    setError('')
+    try {
+      const token = localStorage.getItem('archiform_token')
+      const res = await fetch('http://localhost:8080/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          query: `mutation {
+            sendInvitation(
+              email: "${form.email.trim()}"
+              ${form.firstName ? `firstName: "${form.firstName.trim()}"` : ''}
+              role: ${form.role}
+            ) { id email status }
+          }`
+        }),
+      })
+      const json = await res.json()
+      if (json.errors) {
+        setError(json.errors[0]?.message || 'Failed to send invitation')
+        return
+      }
+      setSuccess(true)
+      setTimeout(() => { onInvited(); onClose() }, 2000)
+    } catch {
+      setError('Connection failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose} />
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md">
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-lg font-semibold text-navy-900">
+            Invite team member
+          </h2>
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100">
+            <X className="w-4 h-4 text-gray-500" />
+          </button>
+        </div>
+
+        {success ? (
+          <div className="p-8 text-center">
+            <div className="w-14 h-14 bg-green-50 rounded-2xl flex items-center
+              justify-center mx-auto mb-4">
+              <Mail className="w-7 h-7 text-green-500" />
+            </div>
+            <h3 className="font-semibold text-navy-900 mb-2">
+              Invitation sent!
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              An email has been sent to <strong>{form.email}</strong> with
+              instructions to join your firm.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="p-6 space-y-4" noValidate>
+            <Input label="Email address *" type="email"
+              placeholder="colleague@email.com"
+              value={form.email}
+              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              autoFocus />
+            <Input label="First name (optional)"
+              placeholder="Jane"
+              value={form.firstName}
+              onChange={e => setForm(f => ({
+                ...f, firstName: e.target.value
+              }))} />
+            <div>
+              <label className="block text-sm font-medium text-navy-900 mb-1.5">
+                Role
+              </label>
+              <select value={form.role}
+                onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+                className="w-full px-3 py-2 border border-border rounded-lg
+                  text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+                <option value="MEMBER">Member</option>
+                <option value="ADMIN">Admin</option>
+              </select>
+            </div>
+            <div className="bg-blue-50 rounded-lg p-3">
+              <p className="text-xs text-blue-700">
+                They'll receive an email with a link to set their password
+                and join your firm. The link expires in 7 days.
+              </p>
+            </div>
+            {error && (
+              <p className="text-sm text-red-500 font-medium">{error}</p>
+            )}
+            <div className="flex justify-end gap-3 pt-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" loading={loading}>
+                Send Invitation
+              </Button>
+            </div>
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function StaffPage() {
   const [staff, setStaff] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
   const fetchStaff = () => {
-  setLoading(true)
-  apolloClient.clearStore().then(() => {
-    apolloClient.query({ 
-      query: GET_STAFF, 
-      fetchPolicy: 'network-only' 
+    setLoading(true)
+    apolloClient.clearStore().then(() => {
+      apolloClient.query({
+        query: GET_STAFF,
+        fetchPolicy: 'network-only'
+      })
+      .then(result => {
+        setStaff(result.data?.staff || [])
+        setLoading(false)
+      })
+      .catch(err => {
+        console.error(err)
+        setLoading(false)
+      })
     })
-    .then(result => { 
-      setStaff(result.data?.staff || [])
-      setLoading(false) 
-    })
-    .catch(err => { 
-      console.error(err)
-      setLoading(false) 
-    })
-  })
-}
+  }
 
   useEffect(() => { fetchStaff() }, [])
 
@@ -174,12 +302,17 @@ export default function StaffPage() {
       <div className="app-topbar">
         <div className="flex items-center justify-between w-full">
           <h1 className="text-lg font-semibold text-navy-900">Staff</h1>
-          <Button
-            onClick={() => setShowModal(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            Add staff member
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline"
+              onClick={() => setShowInviteModal(true)}
+              leftIcon={<Mail className="w-4 h-4" />}>
+              Invite
+            </Button>
+            <Button onClick={() => setShowModal(true)}
+              leftIcon={<Plus className="w-4 h-4" />}>
+              Add staff member
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -194,20 +327,19 @@ export default function StaffPage() {
 
         {!loading && staff.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mb-6">
+            <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
+              justify-center mb-6">
               <Briefcase className="w-8 h-8 text-brand-400" />
             </div>
             <h3 className="text-xl font-semibold text-navy-900 mb-2">
               Build your team
             </h3>
             <p className="text-muted-foreground text-sm max-w-sm mb-8">
-              Add staff members to assign them to projects, track time, and
-              monitor utilization.
+              Add staff members to assign them to projects, track time,
+              and monitor utilization.
             </p>
-            <Button
-              onClick={() => setShowModal(true)}
-              leftIcon={<Plus className="w-4 h-4" />}
-            >
+            <Button onClick={() => setShowModal(true)}
+              leftIcon={<Plus className="w-4 h-4" />}>
               Add your first staff member
             </Button>
           </div>
@@ -216,12 +348,9 @@ export default function StaffPage() {
         {!loading && staff.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {staff.map((member) => (
-              <div
-                key={member.id}
+              <div key={member.id}
                 className="bg-white rounded-xl border border-border p-5
-                hover:shadow-md transition-all"
-              >
-                {/* Header */}
+                  hover:shadow-md transition-all">
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar
                     name={`${member.user.firstName} ${member.user.lastName}`}
@@ -232,7 +361,7 @@ export default function StaffPage() {
                       {member.user.firstName} {member.user.lastName}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {member.title || "No title"}
+                      {member.title || 'No title'}
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       <Mail className="w-3 h-3 text-muted-foreground" />
@@ -243,7 +372,6 @@ export default function StaffPage() {
                   </div>
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground">Hourly Rate</p>
@@ -254,14 +382,14 @@ export default function StaffPage() {
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground">Department</p>
                     <p className="text-sm font-semibold text-navy-900 mt-0.5">
-                      {member.department || "—"}
+                      {member.department || '—'}
                     </p>
                   </div>
                 </div>
 
-                {/* Utilization */}
                 <div>
-                  <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                  <div className="flex justify-between text-xs
+                    text-muted-foreground mb-1.5">
                     <span>Target utilization</span>
                     <span>{member.targetUtilization}%</span>
                   </div>
@@ -269,9 +397,7 @@ export default function StaffPage() {
                     value={member.targetUtilization}
                     max={100}
                     size="sm"
-                    variant={
-                      member.targetUtilization >= 90 ? "warning" : "success"
-                    }
+                    variant={member.targetUtilization >= 90 ? 'warning' : 'success'}
                   />
                 </div>
               </div>
@@ -286,6 +412,13 @@ export default function StaffPage() {
           onAdded={fetchStaff}
         />
       )}
+
+      {showInviteModal && (
+        <InviteModal
+          onClose={() => setShowInviteModal(false)}
+          onInvited={fetchStaff}
+        />
+      )}
     </>
-  );
+  )
 }

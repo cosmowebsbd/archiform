@@ -16,7 +16,6 @@ const SEARCH_QUERY = gql`
     invoices { id invoiceNumber status total project { name } }
   }
 `
-
 type ResultItem = {
   id: string
   type: 'project' | 'staff' | 'contact' | 'invoice'

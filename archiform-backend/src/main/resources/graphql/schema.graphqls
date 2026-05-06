@@ -176,6 +176,8 @@ type Query {
     invoice(id: ID!):                Invoice!
     contacts:           [Contact!]!
     contact(id: ID!):   Contact!
+    invitations: [Invitation!]!
+    invitationByToken(token: String!): InvitationInfo!
 }
 
 type Mutation {
@@ -207,6 +209,31 @@ type Mutation {
     updateFirm(input: UpdateFirmInput!): Firm!
     updateProfile(input: UpdateProfileInput!): User!
     changePassword(input: ChangePasswordInput!): Boolean!
+
+   sendInvitation(email: String!, firstName: String, role: UserRole): Invitation!
+   acceptInvitation(token: String!, password: String!, firstName: String, lastName: String): AuthPayload!
+   cancelInvitation(id: ID!): Boolean!
+}
+
+type Invitation {
+    id: ID!
+    email: String!
+    firstName: String
+    role: UserRole!
+    status: String!
+    expiresAt: String!
+    createdAt: String!
+    invitedBy: User!
+}
+
+type InvitationInfo {
+    token: String!
+    email: String!
+    firstName: String
+    firmName: String!
+    inviterName: String!
+    isExpired: Boolean!
+    isAccepted: Boolean!
 }
 
 input RegisterInput {

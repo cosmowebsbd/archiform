@@ -214,16 +214,25 @@
   }
 
   .app-main {
-    margin-left: var(--sidebar-width);
-    @apply min-h-screen bg-[#f4f5f9];
+  margin-left: var(--sidebar-w);
+}
+
+@media (max-width: 1024px) {
+  .app-main {
+    margin-left: 0;
+    padding-top: 3.5rem; /* Space for hamburger button */
   }
+}
 
   .app-topbar {
-    height: var(--topbar-height);
-    @apply sticky top-0 z-30 
-           bg-white border-b border-border
-           flex items-center px-6;
+  /* existing styles */
+}
+
+@media (max-width: 1024px) {
+  .app-topbar {
+    padding-left: 3.5rem; /* Space for hamburger button */
   }
+}
 
   /* ── KPI Card ── */
   .kpi-card {

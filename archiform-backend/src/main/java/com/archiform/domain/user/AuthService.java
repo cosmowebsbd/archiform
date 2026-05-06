@@ -95,4 +95,18 @@ public class AuthService {
         log.info("User logged in: {}", user.getEmail());
         return new AuthPayload(token, user, firm);
     }
+    
+    public AuthPayload loginUser(User user) {
+        var memberships = firmMemberRepository
+                .findByUserIdAndActiveTrueOrderByCreatedAtAsc(user.getId());
+        if (memberships.isEmpty())
+            throw new ArchiformException("No firm found for user.");
+        var membership = memberships.get(0);
+        Firm firm = membership.getFirm();
+        String token = jwtTokenProvider.generateToken(
+                user.getId().toString(),
+                firm.getId().toString(),
+                membership.getRole().name());
+        return new AuthPayload(token, user, firm);
+    }
 }

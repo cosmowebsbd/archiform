@@ -24,4 +24,6 @@ public interface FirmMemberRepository extends JpaRepository<FirmMember, UUID> {
                                                   @Param("userId") UUID userId);
 
     boolean existsByFirmIdAndUserId(UUID firmId, UUID userId);
+    
+   
 }

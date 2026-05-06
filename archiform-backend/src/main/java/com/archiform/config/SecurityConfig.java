@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers("/graphql").permitAll()
                 .requestMatchers("/graphiql/**").permitAll()
                 .requestMatchers("/health").permitAll()
+                .requestMatchers("/api/invoices/**").permitAll()
                 .anyRequest().permitAll())
             .headers(headers -> headers.frameOptions(frame -> frame.disable()))
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

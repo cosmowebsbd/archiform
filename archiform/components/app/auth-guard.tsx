@@ -1,11 +1,11 @@
 'use client'
 
 import { useAuth } from '@/hooks/useAuth'
+import MobileHeader from '@/components/app/mobile-header'
 
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth()
 
-  // Still checking
   if (isAuthenticated === null) {
     return (
       <div className="min-h-screen bg-[#f4f5f9] flex items-center justify-center">
@@ -18,8 +18,12 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     )
   }
 
-  // Not authenticated — useAuth already redirected
   if (!isAuthenticated) return null
 
-  return <>{children}</>
+  return (
+    <>
+      <MobileHeader />
+      {children}
+    </>
+  )
 }

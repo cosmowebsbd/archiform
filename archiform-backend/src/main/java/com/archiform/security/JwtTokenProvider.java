@@ -55,4 +55,8 @@ public class JwtTokenProvider {
     private SecretKey getSigningKey() {
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
+    
+    public String getFirmId(String token) {
+        return parseClaims(token).get("firmId", String.class);
+    }
 }
