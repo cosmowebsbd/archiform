@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Building2, Eye, EyeOff, ArrowRight } from 'lucide-react'
@@ -14,6 +14,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('archiform_token')
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        const isExpired = payload.exp * 1000 < Date.now()
+        if (!isExpired) {
+          router.replace('/dashboard')
+          return
+        }
+      } catch {
+        // Invalid token — clear it
+        localStorage.clear()
+      }
+    }
+  }, [])
 
   const set = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }))
@@ -59,7 +77,6 @@ export default function LoginPage() {
       localStorage.setItem('archiform_user', JSON.stringify(user))
       localStorage.setItem('archiform_firm', JSON.stringify(firm))
 
-      console.log('Login successful, token saved:', token.substring(0, 20) + '...')
       router.push('/dashboard')
 
     } catch (err: any) {

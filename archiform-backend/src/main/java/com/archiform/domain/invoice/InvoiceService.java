@@ -55,7 +55,6 @@ public class InvoiceService {
         return invoiceRepository.findByIdAndFirmId(id, firmId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invoice", id));
     }
-
 	/*
 	 * @Caching(evict = {
 	 * 
@@ -134,7 +133,7 @@ public class InvoiceService {
 
     private String generateInvoiceNumber(UUID firmId) {
         String year = String.valueOf(LocalDate.now().getYear());
-        long count = invoiceRepository.findByFirmIdOrderByIssueDateDesc(firmId).size() + 1;
+        long count = invoiceRepository.countByFirmId(firmId) + 1;
         String candidate = "INV-" + year + "-" + String.format("%03d", count);
         int tries = 0;
         while (invoiceRepository.existsByFirmIdAndInvoiceNumber(firmId, candidate) && tries < 100) {

@@ -6,10 +6,11 @@ import { usePathname } from 'next/navigation'
 import {
   Home, FolderOpen, Users, Clock, DollarSign,
   BarChart2, BookUser, Search, Timer, Gift,
-  Settings, ChevronDown, Play, Square, X
+  Settings, ChevronDown, Play, Square, X, LogOut
 } from 'lucide-react'
 import { Avatar } from '@/components/ui/avatar'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/useAuth'
 
 const navItems = [
   { icon: Home,       label: 'Home',      href: '/dashboard' },
@@ -24,6 +25,13 @@ const navItems = [
 
 export default function AppSidebar() {
   const pathname = usePathname()
+  const { logout } = useAuth()
+
+  // Firm + user state
+  const [firmName, setFirmName] = useState('Your Firm')
+  const [firmPlan, setFirmPlan] = useState('trial')
+  const [userInitials, setUserInitials] = useState('U')
+  const [userName, setUserName] = useState('')
 
   // Timer state
   const [timerRunning, setTimerRunning] = useState(false)
@@ -36,9 +44,6 @@ export default function AppSidebar() {
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [firmName, setFirmName] = useState('Your Firm')
-  const [firmPlan, setFirmPlan] = useState('trial')
-  const [userInitials, setUserInitials] = useState('MS')
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const startRef = useRef<number>(0)
 
@@ -49,47 +54,44 @@ export default function AppSidebar() {
       const user = JSON.parse(localStorage.getItem('archiform_user') || '{}')
       if (firm.name) setFirmName(firm.name)
       if (firm.plan) setFirmPlan(firm.plan.toLowerCase())
-      if (user.firstName) setUserInitials(
-        `${user.firstName[0]}${user.lastName?.[0] || ''}`.toUpperCase()
-      )
+      if (user.firstName) {
+        setUserName(user.firstName)
+        setUserInitials(
+          `${user.firstName[0]}${user.lastName?.[0] || ''}`.toUpperCase()
+        )
+      }
     } catch {}
   }, [])
 
   // Load projects and staff for timer
-  // Load projects and staff for timer
-useEffect(() => {
-  if (!showTimerPanel) return
-  const token = localStorage.getItem('archiform_token')
-  if (!token) {
-    console.log('No token for timer data')
-    return
-  }
-  console.log('Loading timer data...')
-  fetch('http://localhost:8080/graphql', {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json', 
-      'Authorization': `Bearer ${token}` 
-    },
-    body: JSON.stringify({ 
-      query: `{ 
-        projects { id name status } 
-        staff { id user { firstName lastName } } 
-      }` 
-    }),
-  })
-  .then(r => r.json())
-  .then(d => {
-    console.log('Timer data:', d)
-    const projs = d.data?.projects || []
-    const stf = d.data?.staff || []
-    setProjects(projs)
-    setStaff(stf)
-    if (projs[0]) setSelectedProject(projs[0].id)
-    if (stf[0]) setSelectedStaff(stf[0].id)
-  })
-  .catch(e => console.error('Timer data error:', e))
-}, [showTimerPanel])
+  useEffect(() => {
+    if (!showTimerPanel) return
+    const token = localStorage.getItem('archiform_token')
+    if (!token) return
+    fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        query: `{
+          projects { id name status }
+          staff { id user { firstName lastName } }
+        }`
+      }),
+    })
+    .then(r => r.json())
+    .then(d => {
+      const projs = d.data?.projects || []
+      const stf = d.data?.staff || []
+      setProjects(projs)
+      setStaff(stf)
+      if (projs[0] && !selectedProject) setSelectedProject(projs[0].id)
+      if (stf[0] && !selectedStaff) setSelectedStaff(stf[0].id)
+    })
+    .catch(console.error)
+  }, [showTimerPanel])
 
   // Timer interval
   useEffect(() => {
@@ -104,11 +106,42 @@ useEffect(() => {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
   }, [timerRunning])
 
+  // Persist timer in localStorage
+  useEffect(() => {
+    if (timerRunning) {
+      localStorage.setItem('archiform_timer', JSON.stringify({
+        running: true,
+        startedAt: Date.now() - timerSeconds * 1000,
+        projectId: selectedProject,
+        staffId: selectedStaff,
+        description,
+      }))
+    } else {
+      localStorage.removeItem('archiform_timer')
+    }
+  }, [timerRunning, timerSeconds, selectedProject, selectedStaff, description])
+
+  // Restore timer on mount
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('archiform_timer') || 'null')
+      if (saved?.running) {
+        const elapsed = Math.floor((Date.now() - saved.startedAt) / 1000)
+        setTimerSeconds(elapsed)
+        setSelectedProject(saved.projectId || '')
+        setSelectedStaff(saved.staffId || '')
+        setDescription(saved.description || '')
+        setShowTimerPanel(true)
+        setTimerRunning(true)
+      }
+    } catch {}
+  }, [])
+
   const formatTimer = (s: number) => {
     const h = Math.floor(s / 3600)
     const m = Math.floor((s % 3600) / 60)
     const sec = s % 60
-    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
   }
 
   const handleStart = () => {
@@ -118,8 +151,10 @@ useEffect(() => {
 
   const handleStop = async () => {
     setTimerRunning(false)
+    localStorage.removeItem('archiform_timer')
     if (timerSeconds < 60 || !selectedProject || !selectedStaff) {
       setTimerSeconds(0)
+      setShowTimerPanel(false)
       return
     }
     setSaving(true)
@@ -129,7 +164,10 @@ useEffect(() => {
       const token = localStorage.getItem('archiform_token')
       const res = await fetch('http://localhost:8080/graphql', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
           query: `mutation {
             logTime(input: {
@@ -146,10 +184,15 @@ useEffect(() => {
       const json = await res.json()
       if (!json.errors) {
         setSaved(true)
-        setTimeout(() => { setSaved(false); setShowTimerPanel(false) }, 2000)
+        setTimeout(() => {
+          setSaved(false)
+          setShowTimerPanel(false)
+          setTimerSeconds(0)
+          setDescription('')
+        }, 2000)
       }
     } catch (e) { console.error(e) }
-    finally { setSaving(false); setTimerSeconds(0); setDescription('') }
+    finally { setSaving(false) }
   }
 
   const handleDiscard = () => {
@@ -157,6 +200,7 @@ useEffect(() => {
     setTimerSeconds(0)
     setDescription('')
     setShowTimerPanel(false)
+    localStorage.removeItem('archiform_timer')
   }
 
   return (
@@ -165,15 +209,16 @@ useEffect(() => {
       <div className="px-3 py-4 border-b border-white/10">
         <button className="w-full flex items-center gap-2.5 p-2.5 rounded-lg
           hover:bg-white/10 transition-colors group">
-          <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center
-            flex-shrink-0 text-white font-bold text-sm">
+          <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center
+            justify-center flex-shrink-0 text-white font-bold text-sm">
             {firmName.substring(0, 2).toUpperCase()}
           </div>
           <div className="flex-1 text-left min-w-0">
             <p className="text-white text-xs font-semibold truncate">{firmName}</p>
             <p className="text-white/40 text-[10px] capitalize">{firmPlan} plan</p>
           </div>
-          <ChevronDown className="w-3.5 h-3.5 text-white/40 group-hover:text-white/60 flex-shrink-0" />
+          <ChevronDown className="w-3.5 h-3.5 text-white/40
+            group-hover:text-white/60 flex-shrink-0" />
         </button>
       </div>
 
@@ -192,10 +237,9 @@ useEffect(() => {
         })}
       </nav>
 
-      {/* Timer Panel — slides up when active */}
+      {/* Timer Panel */}
       {showTimerPanel && (
         <div className="mx-2 mb-2 bg-white/10 rounded-xl p-3 border border-white/20">
-          {/* Timer display */}
           <div className="flex items-center justify-between mb-3">
             <span className={cn(
               'text-lg font-mono font-bold',
@@ -204,10 +248,13 @@ useEffect(() => {
               {formatTimer(timerSeconds)}
             </span>
             <div className="flex items-center gap-1.5">
-              <button onClick={() => setTimerRunning(!timerRunning)}
+              <button
+                onClick={() => setTimerRunning(!timerRunning)}
                 className={cn(
                   'w-7 h-7 rounded-full flex items-center justify-center transition-all',
-                  timerRunning ? 'bg-orange-500 hover:bg-orange-600' : 'bg-green-500 hover:bg-green-600'
+                  timerRunning
+                    ? 'bg-orange-500 hover:bg-orange-600'
+                    : 'bg-green-500 hover:bg-green-600'
                 )}>
                 {timerRunning
                   ? <span className="w-2.5 h-2.5 bg-white rounded-sm" />
@@ -230,24 +277,29 @@ useEffect(() => {
             <p className="text-xs text-green-400 font-medium mb-2">✅ Saved!</p>
           )}
 
-          <input value={description} onChange={e => setDescription(e.target.value)}
+          <input value={description}
+            onChange={e => setDescription(e.target.value)}
             placeholder="What are you working on?"
-            className="w-full px-2.5 py-1.5 bg-white/10 border border-white/20 rounded-lg
-              text-xs text-white placeholder-white/30 focus:outline-none
-              focus:ring-1 focus:ring-brand-400 mb-2" />
+            className="w-full px-2.5 py-1.5 bg-white/10 border border-white/20
+              rounded-lg text-xs text-white placeholder-white/30
+              focus:outline-none focus:ring-1 focus:ring-brand-400 mb-2" />
 
-          <select value={selectedProject} onChange={e => setSelectedProject(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-white/10 border border-white/20 rounded-lg
-              text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand-400 mb-2">
+          <select value={selectedProject}
+            onChange={e => setSelectedProject(e.target.value)}
+            className="w-full px-2.5 py-1.5 bg-white/10 border border-white/20
+              rounded-lg text-xs text-white focus:outline-none
+              focus:ring-1 focus:ring-brand-400 mb-2">
             <option value="" className="text-black">Select project</option>
             {projects.map(p => (
               <option key={p.id} value={p.id} className="text-black">{p.name}</option>
             ))}
           </select>
 
-          <select value={selectedStaff} onChange={e => setSelectedStaff(e.target.value)}
-            className="w-full px-2.5 py-1.5 bg-white/10 border border-white/20 rounded-lg
-              text-xs text-white focus:outline-none focus:ring-1 focus:ring-brand-400">
+          <select value={selectedStaff}
+            onChange={e => setSelectedStaff(e.target.value)}
+            className="w-full px-2.5 py-1.5 bg-white/10 border border-white/20
+              rounded-lg text-xs text-white focus:outline-none
+              focus:ring-1 focus:ring-brand-400">
             <option value="" className="text-black">Select staff</option>
             {staff.map(s => (
               <option key={s.id} value={s.id} className="text-black">
@@ -266,8 +318,7 @@ useEffect(() => {
           className={cn(
             'sidebar-item w-full relative',
             timerRunning && 'text-green-400 bg-green-400/10'
-          )}
-        >
+          )}>
           {timerRunning && (
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full
               bg-green-400 animate-pulse" />
@@ -282,12 +333,25 @@ useEffect(() => {
           <span>Rewards</span>
         </button>
 
-        {/* User */}
-        <div className="flex items-center justify-between px-2 py-2 mt-2">
-          <Avatar name={userInitials} size="sm" />
-          <Link href="/settings">
-            <Settings className="w-4 h-4 text-white/40 hover:text-white/70 transition-colors" />
-          </Link>
+        {/* User row */}
+        <div className="flex items-center justify-between px-2 py-2 mt-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <Avatar name={userInitials} size="sm" />
+            {userName && (
+              <p className="text-white text-xs font-medium truncate">{userName}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <Link href="/settings" title="Settings">
+              <Settings className="w-4 h-4 text-white/40 hover:text-white/70
+                transition-colors" />
+            </Link>
+            <button onClick={logout} title="Log out"
+              className="p-1 rounded hover:bg-white/10 transition-colors group">
+              <LogOut className="w-4 h-4 text-white/40 group-hover:text-red-400
+                transition-colors" />
+            </button>
+          </div>
         </div>
       </div>
     </aside>

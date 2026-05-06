@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import ApolloClientProvider from '@/components/providers/ApolloProvider'
+import ErrorBoundary from '@/components/app/error-boundary'
 
 export const metadata: Metadata = {
   title: {
@@ -10,11 +11,7 @@ export const metadata: Metadata = {
   description: 'The fastest project management software for Architecture & Engineering firms.',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -23,7 +20,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen antialiased">
         <ApolloClientProvider>
-          {children}
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
         </ApolloClientProvider>
       </body>
     </html>

@@ -1,9 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Building2, ArrowRight, Loader2 } from 'lucide-react'
+import { Building2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
@@ -51,6 +51,23 @@ export default function GetStartedPage() {
     location: '',
   })
 
+  // Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem('archiform_token')
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]))
+        const isExpired = payload.exp * 1000 < Date.now()
+        if (!isExpired) {
+          router.replace('/dashboard')
+          return
+        }
+      } catch {
+        localStorage.clear()
+      }
+    }
+  }, [])
+
   const set = (field: string, value: string) => {
     setForm((f) => ({ ...f, [field]: value }))
     if (errors[field]) setErrors((e) => ({ ...e, [field]: '' }))
@@ -59,7 +76,8 @@ export default function GetStartedPage() {
   const validateStep1 = () => {
     const errs: Record<string, string> = {}
     if (!form.email) errs.email = 'Work email is required'
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Enter a valid email address'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+      errs.email = 'Enter a valid email address'
     setErrors(errs)
     return Object.keys(errs).length === 0
   }
@@ -70,7 +88,8 @@ export default function GetStartedPage() {
     if (!form.howDidYouHear) errs.howDidYouHear = 'Please select an option'
     if (!form.companyName.trim()) errs.companyName = 'Company name is required'
     if (!form.numberOfEmployees) errs.numberOfEmployees = 'Number of employees is required'
-    else if (Number(form.numberOfEmployees) < 1) errs.numberOfEmployees = 'Must be at least 1'
+    else if (Number(form.numberOfEmployees) < 1)
+      errs.numberOfEmployees = 'Must be at least 1'
     if (!form.industry) errs.industry = 'Please select your industry'
     if (!form.location.trim()) errs.location = 'Location is required'
     setErrors(errs)
@@ -81,63 +100,63 @@ export default function GetStartedPage() {
     e.preventDefault()
     if (!validateStep1()) return
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 600))
+    await new Promise((r) => setTimeout(r, 400))
     setLoading(false)
     setStep(2)
   }
 
   const handleStep2 = async (e: React.FormEvent) => {
-  e.preventDefault()
-  if (!validateStep2()) return
-  setLoading(true)
+    e.preventDefault()
+    if (!validateStep2()) return
+    setLoading(true)
 
-  try {
-    const response = await fetch('http://localhost:8080/graphql', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: `mutation {
-          register(input: {
-            email: "${form.email.trim()}"
-            password: "TempPassword123!"
-            firstName: "${form.firstName.trim()}"
-            lastName: "User"
-            firmName: "${form.companyName.trim()}"
-            industry: ${form.industry || 'ARCHITECTURE'}
-            employeeCount: ${parseInt(form.numberOfEmployees) || 1}
-            location: "${form.location.trim()}"
-            howDidYouHear: "${form.howDidYouHear}"
-          }) {
-            token
-            user { id email firstName lastName }
-            firm { id name plan trialEndsAt }
-          }
-        }`
-      }),
-    })
+    try {
+      const response = await fetch('http://localhost:8080/graphql', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `mutation {
+            register(input: {
+              email: "${form.email.trim()}"
+              password: "TempPassword123!"
+              firstName: "${form.firstName.trim()}"
+              lastName: "User"
+              firmName: "${form.companyName.trim()}"
+              industry: ${form.industry || 'ARCHITECTURE'}
+              employeeCount: ${parseInt(form.numberOfEmployees) || 1}
+              location: "${form.location.trim()}"
+              howDidYouHear: "${form.howDidYouHear}"
+            }) {
+              token
+              user { id email firstName lastName }
+              firm { id name plan trialEndsAt }
+            }
+          }`
+        }),
+      })
 
-    const json = await response.json()
+      const json = await response.json()
 
-    if (json.errors) {
-      setErrors({ email: json.errors[0]?.message || 'Registration failed' })
+      if (json.errors) {
+        setErrors({ email: json.errors[0]?.message || 'Registration failed' })
+        setLoading(false)
+        return
+      }
+
+      const { token, user, firm } = json.data.register
+      localStorage.setItem('archiform_token', token)
+      localStorage.setItem('archiform_user', JSON.stringify(user))
+      localStorage.setItem('archiform_firm', JSON.stringify(firm))
+
+      router.push('/dashboard')
+
+    } catch (err) {
+      setErrors({ email: 'Connection failed. Is the backend running?' })
+      console.error(err)
+    } finally {
       setLoading(false)
-      return
     }
-
-    const { token, user, firm } = json.data.register
-    localStorage.setItem('archiform_token', token)
-    localStorage.setItem('archiform_user', JSON.stringify(user))
-    localStorage.setItem('archiform_firm', JSON.stringify(firm))
-
-    router.push('/dashboard')
-
-  } catch (err) {
-    setErrors({ email: 'Connection failed. Is the backend running?' })
-    console.error(err)
-  } finally {
-    setLoading(false)
   }
-}
 
   return (
     <div className="min-h-screen bg-[#f4f5f9] flex flex-col">
@@ -147,7 +166,8 @@ export default function GetStartedPage() {
           <div className="w-9 h-9 bg-navy-900 rounded-xl flex items-center justify-center">
             <Building2 className="w-5 h-5 text-white" />
           </div>
-          <span className="text-2xl font-semibold text-navy-900" style={{ fontFamily: 'var(--font-display)' }}>
+          <span className="text-2xl font-semibold text-navy-900"
+            style={{ fontFamily: 'var(--font-display)' }}>
             Archiform
           </span>
         </Link>
@@ -155,8 +175,10 @@ export default function GetStartedPage() {
 
       {/* Card */}
       <div className="flex-1 flex items-start justify-center px-4 pb-16">
-        <div className="w-full max-w-2xl bg-white rounded-2xl border border-border shadow-card-hover p-8 md:p-12">
-          <h1 className="text-3xl font-normal text-center text-navy-950 mb-2" style={{ fontFamily: 'var(--font-display)' }}>
+        <div className="w-full max-w-2xl bg-white rounded-2xl border border-border
+          shadow-card-hover p-8 md:p-12">
+          <h1 className="text-3xl font-normal text-center text-navy-950 mb-2"
+            style={{ fontFamily: 'var(--font-display)' }}>
             Let's get started
           </h1>
           <p className="text-center text-muted-foreground mb-8">
@@ -164,12 +186,15 @@ export default function GetStartedPage() {
           </p>
 
           {/* Customer logos row */}
-          <div className="flex items-stretch justify-between gap-2 mb-10 overflow-x-auto pb-2">
+          <div className="flex items-stretch justify-between gap-2 mb-10
+            overflow-x-auto pb-2">
             {customerLogos.map((c, i) => (
               <React.Fragment key={c.name}>
                 {i > 0 && <div className="w-px bg-border flex-shrink-0" />}
-                <div className="flex flex-col items-center justify-center gap-1.5 px-3 min-w-[100px] text-center">
-                  <p className="text-[9px] text-muted-foreground leading-tight font-medium uppercase tracking-wide">
+                <div className="flex flex-col items-center justify-center gap-1.5
+                  px-3 min-w-[100px] text-center">
+                  <p className="text-[9px] text-muted-foreground leading-tight
+                    font-medium uppercase tracking-wide">
                     {c.award}
                   </p>
                   <p className="text-xs font-semibold text-navy-900">{c.name}</p>
@@ -178,7 +203,17 @@ export default function GetStartedPage() {
             ))}
           </div>
 
-          {/* ── Step 1: Email only ── */}
+          {/* Step indicator */}
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <div className={`w-2 h-2 rounded-full transition-colors ${
+              step === 1 ? 'bg-brand-500' : 'bg-brand-200'
+            }`} />
+            <div className={`w-2 h-2 rounded-full transition-colors ${
+              step === 2 ? 'bg-brand-500' : 'bg-gray-200'
+            }`} />
+          </div>
+
+          {/* Step 1 — Email only */}
           {step === 1 && (
             <form onSubmit={handleStep1} className="space-y-4" noValidate>
               <Input
@@ -190,25 +225,22 @@ export default function GetStartedPage() {
                 error={errors.email}
                 autoFocus
               />
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
+              <Button type="submit" className="w-full" size="lg"
                 loading={loading}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
+                rightIcon={<ArrowRight className="w-4 h-4" />}>
                 Get started
               </Button>
               <p className="text-center text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <Link href="/auth/login" className="text-brand-500 font-medium hover:underline">
+                <Link href="/auth/login"
+                  className="text-brand-500 font-medium hover:underline">
                   Log in here
                 </Link>
               </p>
             </form>
           )}
 
-          {/* ── Step 2: Full profile ── */}
+          {/* Step 2 — Full profile */}
           {step === 2 && (
             <form onSubmit={handleStep2} className="space-y-5" noValidate>
               <div className="grid grid-cols-2 gap-4">
@@ -278,19 +310,16 @@ export default function GetStartedPage() {
                 />
               </div>
 
-              <Button
-                type="submit"
-                className="w-full"
-                size="lg"
+              <Button type="submit" className="w-full" size="lg"
                 loading={loading}
-                rightIcon={<ArrowRight className="w-4 h-4" />}
-              >
-                Continue
+                rightIcon={<ArrowRight className="w-4 h-4" />}>
+                Create my account
               </Button>
 
               <p className="text-center text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <Link href="/auth/login" className="text-brand-500 font-medium hover:underline">
+                <Link href="/auth/login"
+                  className="text-brand-500 font-medium hover:underline">
                   Log in here
                 </Link>
               </p>

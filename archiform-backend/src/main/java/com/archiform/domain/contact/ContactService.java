@@ -22,7 +22,7 @@ public class ContactService {
 
     @Transactional(readOnly = true)
     public List<Contact> getContactsByFirm(UUID firmId) {
-        return contactRepository.findByFirmIdOrderByNameAsc(firmId);
+        return contactRepository.findByFirmIdOrderByName(firmId);
     }
 
     @Transactional(readOnly = true)

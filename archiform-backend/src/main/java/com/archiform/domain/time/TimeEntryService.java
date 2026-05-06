@@ -43,15 +43,17 @@ public class TimeEntryService {
     }
 
     @Transactional(readOnly = true)
-    public List<TimeEntry> getTimeEntries(UUID firmId, UUID projectId, UUID staffId,
-                                           LocalDate from, LocalDate to) {
-        LocalDate f = from != null ? from : LocalDate.now().minusDays(30);
-        LocalDate t = to   != null ? to   : LocalDate.now();
-        if (staffId != null)
-            return timeEntryRepository.findByStaffIdAndEntryDateBetweenOrderByEntryDateDesc(staffId, f, t);
+    public List<TimeEntry> getTimeEntries(UUID firmId, UUID projectId,
+                                           UUID staffId, LocalDate from, LocalDate to) {
         if (projectId != null)
-            return timeEntryRepository.findByProjectIdOrderByEntryDateDesc(projectId);
-        return timeEntryRepository.findByFirmIdAndEntryDateBetweenOrderByEntryDateDesc(firmId, f, t);
+            return timeEntryRepository.findByFirmIdAndProjectIdOrderByEntryDateDesc(firmId, projectId);
+        if (staffId != null)
+            return timeEntryRepository.findByFirmIdAndStaffIdOrderByEntryDateDesc(firmId, staffId);
+        if (from != null && to != null)
+            return timeEntryRepository.findByFirmIdAndDateRange(firmId, from, to);
+        if (from != null)
+            return timeEntryRepository.findByFirmIdAndDateRange(firmId, from, LocalDate.now());
+        return timeEntryRepository.findByFirmIdOrderByEntryDateDesc(firmId);
     }
 
     
