@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
 import { apolloClient } from '@/lib/apollo-client'
+import { SkeletonCard } from '@/components/ui/skeleton'
 
 const GET_CONTACTS = gql`
   query {
@@ -165,8 +166,10 @@ export default function ContactsPage() {
       <div className="app-topbar">
         <div className="flex items-center justify-between w-full">
           <h1 className="text-lg font-semibold text-navy-900">Contacts</h1>
-          <Button onClick={() => setShowModal(true)}
-            leftIcon={<Plus className="w-4 h-4" />}>
+          <Button
+            onClick={() => setShowModal(true)}
+            leftIcon={<Plus className="w-4 h-4" />}
+          >
             Add contact
           </Button>
         </div>
@@ -177,7 +180,7 @@ export default function ContactsPage() {
         <div className="mb-6">
           <input
             value={search}
-            onChange={e => setSearch(e.target.value)}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search contacts..."
             className="w-full max-w-sm px-4 py-2 border border-border rounded-lg text-sm
               focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
@@ -185,29 +188,34 @@ export default function ContactsPage() {
         </div>
 
         {loading && (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent
-              rounded-full animate-spin" />
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
           </div>
         )}
 
         {!loading && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
-              justify-center mb-6">
+            <div
+              className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
+              justify-center mb-6"
+            >
               <Users className="w-8 h-8 text-brand-400" />
             </div>
             <h3 className="text-xl font-semibold text-navy-900 mb-2">
-              {search ? 'No contacts found' : 'No contacts yet'}
+              {search ? "No contacts found" : "No contacts yet"}
             </h3>
             <p className="text-muted-foreground text-sm max-w-sm mb-8">
               {search
-                ? 'Try a different search term.'
-                : 'Add clients and contacts to assign them to projects and invoices.'}
+                ? "Try a different search term."
+                : "Add clients and contacts to assign them to projects and invoices."}
             </p>
             {!search && (
-              <Button onClick={() => setShowModal(true)}
-                leftIcon={<Plus className="w-4 h-4" />}>
+              <Button
+                onClick={() => setShowModal(true)}
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
                 Add your first contact
               </Button>
             )}
@@ -216,10 +224,12 @@ export default function ContactsPage() {
 
         {!loading && filtered.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {filtered.map(contact => (
-              <div key={contact.id}
+            {filtered.map((contact) => (
+              <div
+                key={contact.id}
                 className="bg-white rounded-xl border border-border p-5
-                  hover:shadow-md transition-all">
+                  hover:shadow-md transition-all"
+              >
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar name={contact.name} size="lg" />
                   <div className="flex-1 min-w-0">
@@ -237,7 +247,8 @@ export default function ContactsPage() {
                   </div>
                   <button
                     onClick={() => deleteContact(contact.id)}
-                    className="text-xs text-red-400 hover:text-red-600 flex-shrink-0">
+                    className="text-xs text-red-400 hover:text-red-600 flex-shrink-0"
+                  >
                     Delete
                   </button>
                 </div>
@@ -246,8 +257,10 @@ export default function ContactsPage() {
                   {contact.email && (
                     <div className="flex items-center gap-2">
                       <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                      <a href={`mailto:${contact.email}`}
-                        className="text-sm text-brand-500 hover:underline truncate">
+                      <a
+                        href={`mailto:${contact.email}`}
+                        className="text-sm text-brand-500 hover:underline truncate"
+                      >
                         {contact.email}
                       </a>
                     </div>
@@ -255,12 +268,17 @@ export default function ContactsPage() {
                   {contact.phone && (
                     <div className="flex items-center gap-2">
                       <Phone className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                      <span className="text-sm text-muted-foreground">{contact.phone}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {contact.phone}
+                      </span>
                     </div>
                   )}
                   {(contact.city || contact.country) && (
                     <p className="text-xs text-muted-foreground">
-                      📍 {[contact.city, contact.country].filter(Boolean).join(', ')}
+                      📍{" "}
+                      {[contact.city, contact.country]
+                        .filter(Boolean)
+                        .join(", ")}
                     </p>
                   )}
                   {contact.notes && (
@@ -282,5 +300,5 @@ export default function ContactsPage() {
         />
       )}
     </>
-  )
+  );
 }

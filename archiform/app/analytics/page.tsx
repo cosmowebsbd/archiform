@@ -9,7 +9,7 @@ import {
 import { apolloClient } from '@/lib/apollo-client'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { TrendingUp, TrendingDown, Users, DollarSign, Clock, FileText } from 'lucide-react'
-
+import { SkeletonKpiCard } from '@/components/ui/skeleton'
 const ANALYTICS_QUERY = gql`
   query {
     dashboard {
@@ -44,15 +44,22 @@ export default function AnalyticsPage() {
   }, [])
 
   if (loading) return (
-    <div>
-      <div className="app-topbar">
-        <h1 className="text-lg font-semibold text-navy-900">Analytics</h1>
+  <div>
+    <div className="app-topbar">
+      <h1 className="text-lg font-semibold text-navy-900">Analytics</h1>
+    </div>
+    <div className="p-6 space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SkeletonKpiCard key={i} />
+        ))}
       </div>
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+      <div className="bg-white rounded-xl border border-border p-6">
+        <div className="h-64 animate-pulse bg-gray-100 rounded-lg" />
       </div>
     </div>
-  )
+  </div>
+)
 
   const metrics = data?.dashboard
   const projects = data?.projects || []

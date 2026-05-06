@@ -10,6 +10,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { formatCurrency, formatPercent } from '@/lib/utils'
 import { apolloClient } from '@/lib/apollo-client'
 import { gql } from '@apollo/client'
+import { SkeletonDashboard } from '@/components/ui/skeleton'
 
 const DASHBOARD_QUERY = gql`
   query {
@@ -54,18 +55,7 @@ export default function DashboardPage() {
       })
   }, [])
 
-  if (loading) {
-    return (
-      <div>
-        <div className="app-topbar">
-          <h1 className="text-lg font-semibold text-navy-900">Dashboard</h1>
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <SkeletonDashboard />
 
   if (error) {
     return (

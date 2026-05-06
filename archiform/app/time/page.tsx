@@ -9,6 +9,7 @@ import { apolloClient } from '@/lib/apollo-client'
 import { gql } from '@apollo/client'
 import { formatCurrency } from '@/lib/utils'
 import { formatDate } from '@/lib/date-utils'
+import { SkeletonTable } from '@/components/ui/skeleton'
 
 const GET_TIME_DATA = gql`
   query {
@@ -254,13 +255,7 @@ export default function TimePage() {
           </div>
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent
-              rounded-full animate-spin" />
-          </div>
-        )}
-
+        {loading && <SkeletonTable rows={5} cols={6} />}
         {!loading && entries.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center

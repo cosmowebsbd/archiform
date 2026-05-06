@@ -6,6 +6,7 @@ import { gql } from '@apollo/client'
 import { apolloClient } from '@/lib/apollo-client'
 import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const SEARCH_QUERY = gql`
   query {
@@ -105,16 +106,18 @@ export default function SearchPage() {
           <input
             autoFocus
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={(e) => setQuery(e.target.value)}
             placeholder="Search projects, staff, contacts, invoices..."
             className="w-full pl-12 pr-4 py-3.5 border border-border rounded-xl text-sm
               bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500
               focus:border-brand-500"
           />
           {query && (
-            <button onClick={() => setQuery('')}
+            <button
+              onClick={() => setQuery("")}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground
-                hover:text-foreground text-lg leading-none">
+                hover:text-foreground text-lg leading-none"
+            >
               ×
             </button>
           )}
@@ -122,8 +125,21 @@ export default function SearchPage() {
 
         {/* Results */}
         {loading && (
-          <div className="flex justify-center py-12">
-            <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <div className="space-y-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 bg-white rounded-xl
+        border border-border p-4"
+              >
+                <Skeleton className="w-9 h-9 rounded-lg flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            ))}
           </div>
         )}
 
@@ -135,17 +151,37 @@ export default function SearchPage() {
             </p>
             <div className="flex items-center justify-center gap-6 mt-6">
               {[
-                { icon: <Folder className="w-4 h-4" />, label: 'Projects', count: allData.filter(i => i.type === 'project').length },
-                { icon: <Users className="w-4 h-4" />, label: 'Staff', count: allData.filter(i => i.type === 'staff').length },
-                { icon: <UserCircle className="w-4 h-4" />, label: 'Contacts', count: allData.filter(i => i.type === 'contact').length },
-                { icon: <FileText className="w-4 h-4" />, label: 'Invoices', count: allData.filter(i => i.type === 'invoice').length },
-              ].map(item => (
+                {
+                  icon: <Folder className="w-4 h-4" />,
+                  label: "Projects",
+                  count: allData.filter((i) => i.type === "project").length,
+                },
+                {
+                  icon: <Users className="w-4 h-4" />,
+                  label: "Staff",
+                  count: allData.filter((i) => i.type === "staff").length,
+                },
+                {
+                  icon: <UserCircle className="w-4 h-4" />,
+                  label: "Contacts",
+                  count: allData.filter((i) => i.type === "contact").length,
+                },
+                {
+                  icon: <FileText className="w-4 h-4" />,
+                  label: "Invoices",
+                  count: allData.filter((i) => i.type === "invoice").length,
+                },
+              ].map((item) => (
                 <div key={item.label} className="text-center">
-                  <div className="w-10 h-10 bg-white border border-border rounded-xl
-                    flex items-center justify-center mx-auto mb-1 text-muted-foreground">
+                  <div
+                    className="w-10 h-10 bg-white border border-border rounded-xl
+                    flex items-center justify-center mx-auto mb-1 text-muted-foreground"
+                  >
                     {item.icon}
                   </div>
-                  <p className="text-xs text-muted-foreground">{item.count} {item.label}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {item.count} {item.label}
+                  </p>
                 </div>
               ))}
             </div>
@@ -163,27 +199,41 @@ export default function SearchPage() {
         {results.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs text-muted-foreground mb-3">
-              {results.length} result{results.length !== 1 ? 's' : ''} for "{query}"
+              {results.length} result{results.length !== 1 ? "s" : ""} for "
+              {query}"
             </p>
-            {results.map(item => (
-              <Link key={`${item.type}-${item.id}`} href={item.href}
+            {results.map((item) => (
+              <Link
+                key={`${item.type}-${item.id}`}
+                href={item.href}
                 className="flex items-center gap-4 bg-white rounded-xl border border-border
-                  p-4 hover:shadow-md hover:border-brand-200 transition-all">
-                <div className="w-9 h-9 rounded-lg bg-gray-50 border border-border
-                  flex items-center justify-center flex-shrink-0">
+                  p-4 hover:shadow-md hover:border-brand-200 transition-all"
+              >
+                <div
+                  className="w-9 h-9 rounded-lg bg-gray-50 border border-border
+                  flex items-center justify-center flex-shrink-0"
+                >
                   {iconMap[item.type]}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-navy-900 text-sm">{item.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{item.subtitle}</p>
+                  <p className="font-medium text-navy-900 text-sm">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {item.subtitle}
+                  </p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <span className="text-xs font-medium text-muted-foreground bg-gray-100
-                    px-2 py-0.5 rounded-full">
+                  <span
+                    className="text-xs font-medium text-muted-foreground bg-gray-100
+                    px-2 py-0.5 rounded-full"
+                  >
                     {typeLabel[item.type]}
                   </span>
                   {item.meta && (
-                    <p className="text-xs text-muted-foreground mt-1">{item.meta}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {item.meta}
+                    </p>
                   )}
                 </div>
               </Link>
@@ -192,5 +242,5 @@ export default function SearchPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

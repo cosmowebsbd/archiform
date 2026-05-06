@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { apolloClient } from '@/lib/apollo-client'
 import { cn, formatCurrency } from '@/lib/utils'
 import ConfirmModal from '@/components/ui/confirm-modal'
+import { SkeletonProjectRow, SkeletonPageHeader } from '@/components/ui/skeleton'
 
 const GET_PROJECTS = gql`
   query {
@@ -278,8 +279,10 @@ export default function ProjectsPage() {
       <div className="app-topbar">
         <div className="flex items-center justify-between w-full">
           <h1 className="text-lg font-semibold text-navy-900">Projects</h1>
-          <Button onClick={() => setShowModal(true)}
-            leftIcon={<Plus className="w-4 h-4" />}>
+          <Button
+            onClick={() => setShowModal(true)}
+            leftIcon={<Plus className="w-4 h-4" />}
+          >
             New project
           </Button>
         </div>
@@ -288,13 +291,16 @@ export default function ProjectsPage() {
       <div className="bg-white border-b border-border px-6">
         <nav className="flex gap-0">
           {subNav.map((item) => (
-            <button key={item} onClick={() => setActiveSubNav(item)}
+            <button
+              key={item}
+              onClick={() => setActiveSubNav(item)}
               className={cn(
-                'px-4 py-3 text-sm font-medium border-b-2 transition-colors',
+                "px-4 py-3 text-sm font-medium border-b-2 transition-colors",
                 activeSubNav === item
-                  ? 'border-brand-500 text-brand-600'
-                  : 'border-transparent text-muted-foreground hover:text-gray-700'
-              )}>
+                  ? "border-brand-500 text-brand-600"
+                  : "border-transparent text-muted-foreground hover:text-gray-700",
+              )}
+            >
               {item}
             </button>
           ))}
@@ -309,17 +315,27 @@ export default function ProjectsPage() {
             <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
           </button>
           <button
-            onClick={() => setActiveStatus(activeStatus ? null : 'ACTIVE')}
+            onClick={() => setActiveStatus(activeStatus ? null : "ACTIVE")}
             className={cn(
-              'filter-chip',
-              activeStatus && 'bg-brand-50 border-brand-200 text-brand-700'
-            )}>
+              "filter-chip",
+              activeStatus && "bg-brand-50 border-brand-200 text-brand-700",
+            )}
+          >
             Statuses
             {activeStatus && (
               <>
-                <span className="w-4 h-4 bg-brand-500 text-white rounded-full
-                  text-[10px] flex items-center justify-center font-bold">1</span>
-                <button onClick={(e) => { e.stopPropagation(); setActiveStatus(null) }}>
+                <span
+                  className="w-4 h-4 bg-brand-500 text-white rounded-full
+                  text-[10px] flex items-center justify-center font-bold"
+                >
+                  1
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveStatus(null);
+                  }}
+                >
                   <X className="w-3 h-3" />
                 </button>
               </>
@@ -327,39 +343,46 @@ export default function ProjectsPage() {
             <ChevronDown className="w-3.5 h-3.5" />
           </button>
           {activeStatus && (
-            <button onClick={() => setActiveStatus(null)}
-              className="text-sm text-brand-500 hover:underline font-medium">
+            <button
+              onClick={() => setActiveStatus(null)}
+              className="text-sm text-brand-500 hover:underline font-medium"
+            >
               Reset filters
             </button>
           )}
         </div>
 
         {loading && (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent
-              rounded-full animate-spin" />
+          <div className="space-y-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <SkeletonProjectRow key={i} />
+            ))}
           </div>
         )}
 
         {!loading && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
-              justify-center mb-6">
+            <div
+              className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
+              justify-center mb-6"
+            >
               <Monitor className="w-8 h-8 text-brand-400" />
             </div>
             <h3 className="text-xl font-semibold text-navy-900 mb-2">
               {activeStatus
                 ? `No ${activeStatus.toLowerCase()} projects`
-                : 'Build and manage projects'}
+                : "Build and manage projects"}
             </h3>
             <p className="text-muted-foreground text-sm max-w-sm mb-8">
               {activeStatus
-                ? 'Try removing the status filter to see all projects.'
-                : 'Create your first project by adding a budget and phases.'}
+                ? "Try removing the status filter to see all projects."
+                : "Create your first project by adding a budget and phases."}
             </p>
             {!activeStatus && (
-              <Button onClick={() => setShowModal(true)}
-                leftIcon={<Plus className="w-4 h-4" />}>
+              <Button
+                onClick={() => setShowModal(true)}
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
                 Create a Project
               </Button>
             )}
@@ -369,29 +392,39 @@ export default function ProjectsPage() {
         {!loading && filtered.length > 0 && (
           <div className="space-y-3">
             {filtered.map((project) => {
-              const pct = project.totalBudget > 0
-                ? Math.round((project.spentAmount / project.totalBudget) * 100)
-                : 0
-              const cfg = statusConfig[project.status] || statusConfig.DRAFT
-              const activePhases = project.phases?.filter(
-                (p: any) => p.status === 'IN_PROGRESS'
-              ).length || 0
+              const pct =
+                project.totalBudget > 0
+                  ? Math.round(
+                      (project.spentAmount / project.totalBudget) * 100,
+                    )
+                  : 0;
+              const cfg = statusConfig[project.status] || statusConfig.DRAFT;
+              const activePhases =
+                project.phases?.filter((p: any) => p.status === "IN_PROGRESS")
+                  .length || 0;
 
               return (
-                <div key={project.id}
+                <div
+                  key={project.id}
                   className="bg-white rounded-xl border border-border p-5
-                    hover:shadow-md hover:border-brand-200 transition-all group">
+                    hover:shadow-md hover:border-brand-200 transition-all group"
+                >
                   <div className="flex items-center gap-5">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-navy-900
-                          group-hover:text-brand-600 transition-colors">
+                        <h3
+                          className="font-semibold text-navy-900
+                          group-hover:text-brand-600 transition-colors"
+                        >
                           {project.name}
                         </h3>
-                        <span className={cn(
-                          'text-[10px] font-semibold px-2 py-0.5 rounded-full',
-                          cfg.bg, cfg.color
-                        )}>
+                        <span
+                          className={cn(
+                            "text-[10px] font-semibold px-2 py-0.5 rounded-full",
+                            cfg.bg,
+                            cfg.color,
+                          )}
+                        >
                           {cfg.label}
                         </span>
                         {project.category && (
@@ -401,22 +434,33 @@ export default function ProjectsPage() {
                         )}
                       </div>
                       <p className="text-sm text-muted-foreground">
-                        {project.contact?.name || 'No client assigned'} ·{' '}
+                        {project.contact?.name || "No client assigned"} ·{" "}
                         {project.phases?.length || 0} phases
                       </p>
                     </div>
 
                     <div className="w-48 flex-shrink-0">
-                      <div className="flex justify-between text-xs
-                        text-muted-foreground mb-1.5">
+                      <div
+                        className="flex justify-between text-xs
+                        text-muted-foreground mb-1.5"
+                      >
                         <span>Budget used</span>
                         <span>{pct}%</span>
                       </div>
-                      <Progress value={pct} size="sm"
-                        variant={pct >= 90 ? 'danger' : pct >= 75 ? 'warning' : 'success'} />
+                      <Progress
+                        value={pct}
+                        size="sm"
+                        variant={
+                          pct >= 90
+                            ? "danger"
+                            : pct >= 75
+                              ? "warning"
+                              : "success"
+                        }
+                      />
                       <p className="text-xs text-muted-foreground mt-1">
-                        {formatCurrency(project.spentAmount, 'USD', true)} of{' '}
-                        {formatCurrency(project.totalBudget, 'USD', true)}
+                        {formatCurrency(project.spentAmount, "USD", true)} of{" "}
+                        {formatCurrency(project.totalBudget, "USD", true)}
                       </p>
                     </div>
 
@@ -429,21 +473,27 @@ export default function ProjectsPage() {
 
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button
-                        onClick={() => setConfirmDelete({
-                          id: project.id, name: project.name
-                        })}
+                        onClick={() =>
+                          setConfirmDelete({
+                            id: project.id,
+                            name: project.name,
+                          })
+                        }
                         className="text-xs text-red-400 hover:text-red-600
-                          transition-colors px-2 py-1 rounded hover:bg-red-50">
+                          transition-colors px-2 py-1 rounded hover:bg-red-50"
+                      >
                         Delete
                       </button>
                       <Link href={`/projects/${project.id}`}>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground
-                          group-hover:text-brand-500 transition-colors" />
+                        <ArrowRight
+                          className="w-4 h-4 text-muted-foreground
+                          group-hover:text-brand-500 transition-colors"
+                        />
                       </Link>
                     </div>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         )}
@@ -467,5 +517,5 @@ export default function ProjectsPage() {
         />
       )}
     </>
-  )
+  );
 }

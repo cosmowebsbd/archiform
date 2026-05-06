@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { apolloClient } from '@/lib/apollo-client'
 import { cn, formatCurrency } from '@/lib/utils'
 import { formatDate } from '@/lib/date-utils'
+import { SkeletonTable } from '@/components/ui/skeleton'
 
 const GET_INVOICES = gql`
   query {
@@ -351,12 +352,7 @@ export default function MoneyPage() {
           </div>
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent
-              rounded-full animate-spin" />
-          </div>
-        )}
+        {loading && <SkeletonTable rows={4} cols={8} />}
 
         {!loading && invoices.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
