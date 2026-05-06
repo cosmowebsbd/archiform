@@ -47,21 +47,47 @@ export default function AppSidebar() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const startRef = useRef<number>(0)
 
-  // Load firm/user from localStorage
-  useEffect(() => {
-    try {
-      const firm = JSON.parse(localStorage.getItem('archiform_firm') || '{}')
-      const user = JSON.parse(localStorage.getItem('archiform_user') || '{}')
-      if (firm.name) setFirmName(firm.name)
-      if (firm.plan) setFirmPlan(firm.plan.toLowerCase())
-      if (user.firstName) {
-        setUserName(user.firstName)
-        setUserInitials(
-          `${user.firstName[0]}${user.lastName?.[0] || ''}`.toUpperCase()
-        )
-      }
-    } catch {}
-  }, [])
+// Load firm/user from localStorage
+useEffect(() => {
+  try {
+    const firm = JSON.parse(localStorage.getItem('archiform_firm') || '{}')
+    const user = JSON.parse(localStorage.getItem('archiform_user') || '{}')
+    if (firm.name) setFirmName(firm.name)
+    if (firm.plan) setFirmPlan(firm.plan.toLowerCase())
+    if (user.firstName) {
+      setUserName(user.firstName)
+      setUserInitials(
+        `${user.firstName[0]}${user.lastName?.[0] || ''}`.toUpperCase()
+      )
+    }
+  } catch {}
+
+  // Listen for firm updates from settings page
+  const handleFirmUpdate = (e: CustomEvent) => {
+    const firm = e.detail
+    if (firm.name) setFirmName(firm.name)
+    if (firm.plan) setFirmPlan(firm.plan.toLowerCase())
+  }
+
+  // Listen for user updates from settings page
+  const handleUserUpdate = (e: CustomEvent) => {
+    const user = e.detail
+    if (user.firstName) {
+      setUserName(user.firstName)
+      setUserInitials(
+        `${user.firstName[0]}${user.lastName?.[0] || ''}`.toUpperCase()
+      )
+    }
+  }
+
+  window.addEventListener('archiform:firm-updated', handleFirmUpdate as EventListener)
+  window.addEventListener('archiform:user-updated', handleUserUpdate as EventListener)
+
+  return () => {
+    window.removeEventListener('archiform:firm-updated', handleFirmUpdate as EventListener)
+    window.removeEventListener('archiform:user-updated', handleUserUpdate as EventListener)
+  }
+}, [])
 
   // Load projects and staff for timer
   useEffect(() => {

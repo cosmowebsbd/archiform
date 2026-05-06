@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { cn, formatCurrency } from '@/lib/utils'
+import { formatDate } from '@/lib/date-utils'
 
 const GET_PROJECT = gql`
   query GetProject($id: ID!) {
@@ -318,12 +319,12 @@ export default function ProjectDetailPage() {
                 {project.startDate && (
                   <span className="flex items-center gap-1">
                     <Calendar className="w-3 h-3" />
-                    {project.startDate}
-                    {project.endDate && ` → ${project.endDate}`}
+                    {formatDate(project.startDate)}
+                    {project.endDate && ` → ${formatDate(project.endDate)}`}
                   </span>
                 )}
                 <span className="flex items-center gap-1">
-                  📋 Created {project.createdAt?.split('T')[0]}
+                  📋 Created {formatDate(project.createdAt)}
                 </span>
               </div>
             </div>
@@ -462,7 +463,7 @@ export default function ProjectDetailPage() {
                         {(phase.startDate || phase.endDate) && (
                           <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
                             <Calendar className="w-3 h-3" />
-                            {phase.startDate || '?'} → {phase.endDate || '?'}
+                            {formatDate(phase.startDate)} → {formatDate(phase.endDate)}
                           </p>
                         )}
 

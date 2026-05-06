@@ -87,6 +87,7 @@ function AddStaffModal({ onClose, onAdded }: { onClose: () => void; onAdded: () 
           },
         },
       })
+      await apolloClient.clearStore()
       onAdded()
       onClose()
     } catch (err: any) {

@@ -106,68 +106,78 @@ export default function SettingsPage() {
   }, [])
 
   const handleSaveFirm = async () => {
-    setSaving(true)
-    try {
-      const token = localStorage.getItem('archiform_token')
-      const res = await fetch('http://localhost:8080/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          query: `mutation {
-            updateFirm(input: {
-              name: "${firmForm.name.replace(/"/g, '\\"')}"
-              industry: ${firmForm.industry}
-              employeeCount: ${parseInt(firmForm.employeeCount) || 1}
-              location: "${firmForm.location.replace(/"/g, '\\"')}"
-            }) { id name industry employeeCount location }
-          }`
-        }),
-      })
-      const json = await res.json()
-      if (!json.errors) {
-        localStorage.setItem('archiform_firm', JSON.stringify({
-          ...firm, ...json.data?.updateFirm
-        }))
-        setSaved(true)
-        setTimeout(() => setSaved(false), 3000)
-      }
-    } catch (e) { console.error(e) }
-    finally { setSaving(false) }
-  }
+  setSaving(true)
+  try {
+    const token = localStorage.getItem('archiform_token')
+    const res = await fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query: `mutation {
+          updateFirm(input: {
+            name: "${firmForm.name.replace(/"/g, '\\"')}"
+            industry: ${firmForm.industry}
+            employeeCount: ${parseInt(firmForm.employeeCount) || 1}
+            location: "${firmForm.location.replace(/"/g, '\\"')}"
+          }) { id name industry employeeCount location }
+        }`
+      }),
+    })
+    const json = await res.json()
+    if (!json.errors) {
+      const updatedFirm = { ...firm, ...json.data?.updateFirm }
+      localStorage.setItem('archiform_firm', JSON.stringify(updatedFirm))
+
+      // Notify sidebar to update
+      window.dispatchEvent(new CustomEvent('archiform:firm-updated', {
+        detail: updatedFirm
+      }))
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    }
+  } catch (e) { console.error(e) }
+  finally { setSaving(false) }
+}
 
   const handleSaveProfile = async () => {
-    setSaving(true)
-    try {
-      const token = localStorage.getItem('archiform_token')
-      const res = await fetch('http://localhost:8080/graphql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          query: `mutation {
-            updateProfile(input: {
-              firstName: "${profileForm.firstName.replace(/"/g, '\\"')}"
-              lastName: "${profileForm.lastName.replace(/"/g, '\\"')}"
-            }) { id firstName lastName email }
-          }`
-        }),
-      })
-      const json = await res.json()
-      if (!json.errors) {
-        localStorage.setItem('archiform_user', JSON.stringify({
-          ...user, ...json.data?.updateProfile
-        }))
-        setSaved(true)
-        setTimeout(() => setSaved(false), 3000)
-      }
-    } catch (e) { console.error(e) }
-    finally { setSaving(false) }
-  }
+  setSaving(true)
+  try {
+    const token = localStorage.getItem('archiform_token')
+    const res = await fetch('http://localhost:8080/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query: `mutation {
+          updateProfile(input: {
+            firstName: "${profileForm.firstName.replace(/"/g, '\\"')}"
+            lastName: "${profileForm.lastName.replace(/"/g, '\\"')}"
+          }) { id firstName lastName email }
+        }`
+      }),
+    })
+    const json = await res.json()
+    if (!json.errors) {
+      const updatedUser = { ...user, ...json.data?.updateProfile }
+      localStorage.setItem('archiform_user', JSON.stringify(updatedUser))
+
+      // Notify sidebar to update
+      window.dispatchEvent(new CustomEvent('archiform:user-updated', {
+        detail: updatedUser
+      }))
+
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    }
+  } catch (e) { console.error(e) }
+  finally { setSaving(false) }
+}
 
   const handleChangePassword = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {

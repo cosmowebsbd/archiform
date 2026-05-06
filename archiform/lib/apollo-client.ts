@@ -41,3 +41,7 @@ export const apolloClient = new ApolloClient({
     mutate:     { errorPolicy: 'all' },
   },
 })
+
+export async function refetchAfterMutation() {
+  await apolloClient.clearStore()
+}

@@ -68,6 +68,7 @@ function AddContactModal({ onClose, onAdded }: {
       })
       const json = await response.json()
       if (json.errors) { setError(json.errors[0]?.message || 'Failed to create contact'); return }
+      await apolloClient.clearStore()
       onAdded()
       onClose()
     } catch (err) {

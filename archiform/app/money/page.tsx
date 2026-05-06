@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { apolloClient } from '@/lib/apollo-client'
 import { cn, formatCurrency } from '@/lib/utils'
+import { formatDate } from '@/lib/date-utils'
 
 const GET_INVOICES = gql`
   query {
@@ -119,6 +120,7 @@ function CreateInvoiceModal({ onClose, onCreated, projects, contacts }: {
       const json = await response.json()
       if (json.errors) { setError(json.errors[0]?.message || 'Failed to create invoice'); return }
       onCreated()
+      await apolloClient.clearStore()
       onClose()
     } catch (err) {
       setError('Connection failed')
@@ -406,12 +408,8 @@ export default function MoneyPage() {
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {invoice.contact?.name || '—'}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {invoice.issueDate}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {invoice.dueDate}
-                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">{formatDate(invoice.issueDate)}</td>
+                       <td className="px-4 py-3 text-sm text-muted-foreground">{formatDate(invoice.dueDate)}</td>
                       <td className="px-4 py-3 text-sm font-semibold text-navy-900">
                         {formatCurrency(invoice.total)}
                       </td>

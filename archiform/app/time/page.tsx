@@ -8,6 +8,7 @@ import { Avatar } from '@/components/ui/avatar'
 import { apolloClient } from '@/lib/apollo-client'
 import { gql } from '@apollo/client'
 import { formatCurrency } from '@/lib/utils'
+import { formatDate } from '@/lib/date-utils'
 
 const GET_TIME_DATA = gql`
   query {
@@ -80,9 +81,13 @@ function LogTimeModal({ onClose, onLogged, projects, staff }: {
         }),
       })
       const json = await response.json()
-      if (json.errors) { setError(json.errors[0]?.message || 'Failed to log time'); return }
-      onLogged()
-      onClose()
+      if (json.errors) {
+        setError(json.errors[0]?.message || "Failed to log time");
+        return;
+      }
+      await apolloClient.clearStore();
+      onLogged();
+      onClose();
     } catch (err) {
       setError('Connection failed')
     } finally {
@@ -304,7 +309,7 @@ export default function TimePage() {
                 {entries.map((entry, i) => (
                   <tr key={entry.id}
                     className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                    <td className="px-4 py-3 text-sm text-navy-900">{entry.entryDate}</td>
+                    <td className="px-4 py-3 text-sm text-navy-900">{formatDate(entry.entryDate)}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <Avatar
