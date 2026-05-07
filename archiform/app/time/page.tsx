@@ -3,14 +3,14 @@
 import React, { useState, useEffect } from 'react'
 import {
   Plus, X, ChevronLeft, ChevronRight,
-  Clock, Calendar, List, LayoutGrid
+  Clock, List, LayoutGrid
 } from 'lucide-react'
 import { gql } from '@apollo/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
 import { apolloClient } from '@/lib/apollo-client'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { formatDate } from '@/lib/date-utils'
 import { SkeletonTable } from '@/components/ui/skeleton'
 
@@ -129,8 +129,8 @@ function LogTimeModal({ onClose, onLogged, projects, staff }: {
               </label>
               <select value={form.staffId}
                 onChange={e => set('staffId', e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                  focus:outline-none focus:ring-2 focus:ring-brand-500">
+                className="w-full px-3 py-2 border border-border rounded-lg
+                  text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                 <option value="">Select staff</option>
                 {staff.map(s => (
                   <option key={s.id} value={s.id}>
@@ -145,8 +145,8 @@ function LogTimeModal({ onClose, onLogged, projects, staff }: {
               </label>
               <select value={form.projectId}
                 onChange={e => set('projectId', e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                  focus:outline-none focus:ring-2 focus:ring-brand-500">
+                className="w-full px-3 py-2 border border-border rounded-lg
+                  text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
                 <option value="">Select project</option>
                 {projects.map(p => (
                   <option key={p.id} value={p.id}>{p.name}</option>
@@ -182,7 +182,6 @@ function LogTimeModal({ onClose, onLogged, projects, staff }: {
   )
 }
 
-// Get Monday of the week containing the given date
 function getWeekStart(date: Date): Date {
   const d = new Date(date)
   const day = d.getDay()
@@ -190,16 +189,6 @@ function getWeekStart(date: Date): Date {
   d.setDate(diff)
   d.setHours(0, 0, 0, 0)
   return d
-}
-
-function formatWeekDay(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00')
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-}
-
-function formatShortDay(dateStr: string): string {
-  const date = new Date(dateStr + 'T00:00:00')
-  return date.toLocaleDateString('en-US', { weekday: 'short' })
 }
 
 function formatShortDate(dateStr: string): string {
@@ -264,9 +253,9 @@ export default function TimePage() {
     month: 'short', day: 'numeric', year: 'numeric'
   })}`
 
-  const isCurrentWeek = getWeekStart(new Date()).getTime() === currentWeek.getTime()
+  const isCurrentWeek =
+    getWeekStart(new Date()).getTime() === currentWeek.getTime()
 
-  // Build the 7 dates of this week
   const weekDates = Array.from({ length: 7 }, (_, i) => {
     const d = new Date(currentWeek)
     d.setDate(d.getDate() + i)
@@ -277,13 +266,14 @@ export default function TimePage() {
     (sum, row) => sum + row.totalHours, 0
   )
 
+  const todayStr = new Date().toISOString().split('T')[0]
+
   return (
     <>
       <div className="app-topbar">
         <div className="flex items-center justify-between w-full">
           <h1 className="text-lg font-semibold text-navy-900">Time</h1>
           <div className="flex items-center gap-2">
-            {/* View toggle */}
             <div className="flex items-center bg-gray-100 rounded-lg p-1">
               <button
                 onClick={() => setView('weekly')}
@@ -318,20 +308,24 @@ export default function TimePage() {
         </div>
       </div>
 
-      <div className="p-6">
-        {/* Weekly view */}
+      <div className="p-4 md:p-6">
+
+        {/* ── Weekly view ── */}
         {view === 'weekly' && (
           <>
             {/* Week navigation */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center
+              justify-between gap-3 mb-4">
               <div className="flex items-center gap-3">
                 <button onClick={prevWeek}
-                  className="p-2 rounded-lg border border-border hover:bg-gray-50
-                    transition-colors">
+                  className="p-2 rounded-lg border border-border
+                    hover:bg-gray-50 transition-colors">
                   <ChevronLeft className="w-4 h-4 text-gray-600" />
                 </button>
                 <div className="text-center">
-                  <p className="text-sm font-semibold text-navy-900">{weekLabel}</p>
+                  <p className="text-sm font-semibold text-navy-900">
+                    {weekLabel}
+                  </p>
                   {isCurrentWeek && (
                     <p className="text-xs text-brand-500 font-medium">
                       Current week
@@ -339,23 +333,25 @@ export default function TimePage() {
                   )}
                 </div>
                 <button onClick={nextWeek}
-                  className="p-2 rounded-lg border border-border hover:bg-gray-50
-                    transition-colors">
+                  className="p-2 rounded-lg border border-border
+                    hover:bg-gray-50 transition-colors">
                   <ChevronRight className="w-4 h-4 text-gray-600" />
                 </button>
               </div>
 
               <div className="flex items-center gap-3">
-                {/* Summary */}
                 <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Total this week</p>
+                  <p className="text-xs text-muted-foreground">
+                    Total this week
+                  </p>
                   <p className="text-lg font-bold text-navy-900">
                     {totalWeekHours.toFixed(1)}h
                   </p>
                 </div>
                 {!isCurrentWeek && (
                   <button onClick={goToCurrentWeek}
-                    className="text-xs text-brand-500 hover:underline font-medium">
+                    className="text-xs text-brand-500 hover:underline
+                      font-medium">
                     Today
                   </button>
                 )}
@@ -365,216 +361,249 @@ export default function TimePage() {
             {loading ? (
               <SkeletonTable rows={3} cols={9} />
             ) : weeklyData.length === 0 ? (
-              <div className="bg-white rounded-xl border border-border p-12
-                text-center">
-                <div className="w-12 h-12 bg-brand-50 rounded-xl flex items-center
-                  justify-center mx-auto mb-4">
+              <div className="bg-white rounded-xl border border-border
+                p-12 text-center">
+                <div className="w-12 h-12 bg-brand-50 rounded-xl flex
+                  items-center justify-center mx-auto mb-4">
                   <Clock className="w-6 h-6 text-brand-400" />
                 </div>
                 <h3 className="font-semibold text-navy-900 mb-2">
                   No staff members yet
                 </h3>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground">
                   Add staff members to start tracking time.
                 </p>
               </div>
             ) : (
-              <div className="bg-white rounded-xl border border-border overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border bg-gray-50">
-                      <th className="text-left text-xs font-semibold
-                        text-muted-foreground uppercase tracking-wide
-                        px-4 py-3 w-48">
-                        Team Member
-                      </th>
-                      {weekDates.map((dateStr, i) => {
-                        const isToday = dateStr ===
-                          new Date().toISOString().split('T')[0]
-                        return (
-                          <th key={dateStr}
-                            className={cn(
-                              'text-center text-xs font-semibold px-2 py-3',
-                              'uppercase tracking-wide min-w-[80px]',
-                              isToday
-                                ? 'text-brand-600 bg-brand-50'
-                                : 'text-muted-foreground'
-                            )}>
-                            <div>{DAYS[i]}</div>
-                            <div className={cn(
-                              'text-[10px] font-normal mt-0.5',
-                              isToday ? 'text-brand-500' : 'text-muted-foreground'
-                            )}>
-                              {formatShortDate(dateStr)}
-                            </div>
-                          </th>
-                        )
-                      })}
-                      <th className="text-center text-xs font-semibold
-                        text-muted-foreground uppercase tracking-wide px-4 py-3">
-                        Total
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {weeklyData.map((row, rowIndex) => (
-                      <tr key={row.staff.id}
-                        className={cn(
-                          'border-b border-border last:border-0',
-                          rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
-                        )}>
-                        {/* Staff member */}
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            <Avatar
-                              name={`${row.staff.user.firstName} ${row.staff.user.lastName}`}
-                              size="sm"
-                            />
-                            <span className="text-sm font-medium text-navy-900 truncate">
-                              {row.staff.user.firstName} {row.staff.user.lastName}
-                            </span>
-                          </div>
-                        </td>
+              <div className="rounded-xl border border-border bg-white">
+                <div
+                  className="overflow-x-auto rounded-xl"
+                  style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <table style={{ minWidth: '800px', width: '100%' }}>
+                    <thead>
+                      <tr className="border-b border-border bg-gray-50">
+                        {/* Team member column */}
+                        <th
+                          className="text-left text-xs font-semibold
+                            text-muted-foreground uppercase tracking-wide
+                            px-3 py-3"
+                          style={{ minWidth: '130px', width: '130px' }}>
+                          Team Member
+                        </th>
 
-                        {/* Day cells */}
-                        {row.days.map((day: any) => {
-                          const cellKey = `${row.staff.id}-${day.date}`
-                          const hasHours = day.hours > 0
-                          const isToday = day.date ===
-                            new Date().toISOString().split('T')[0]
-                          const isExpanded = expandedCell === cellKey
-
+                        {/* Day columns */}
+                        {weekDates.map((dateStr, i) => {
+                          const isToday = dateStr === todayStr
                           return (
-                            <td key={day.date}
+                            <th key={dateStr}
                               className={cn(
-                                'px-2 py-3 text-center relative',
-                                isToday && 'bg-brand-50/50'
-                              )}>
-                              <button
-                                onClick={() => hasHours
-                                  ? setExpandedCell(
-                                      isExpanded ? null : cellKey
-                                    )
-                                  : null
-                                }
-                                className={cn(
-                                  'w-full py-1.5 px-2 rounded-lg text-xs',
-                                  'font-semibold transition-colors',
-                                  hasHours
-                                    ? 'bg-brand-100 text-brand-700 hover:bg-brand-200 cursor-pointer'
-                                    : 'text-gray-300 cursor-default'
-                                )}>
-                                {hasHours ? `${day.hours.toFixed(1)}h` : '—'}
-                              </button>
-
-                              {/* Expanded cell tooltip */}
-                              {isExpanded && hasHours && (
-                                <>
-                                  <div className="fixed inset-0 z-10"
-                                    onClick={() => setExpandedCell(null)} />
-                                  <div className="absolute top-full left-1/2
-                                    -translate-x-1/2 mt-1 z-20 bg-white
-                                    rounded-xl border border-border shadow-xl
-                                    p-3 w-56 text-left">
-                                    <p className="text-xs font-semibold
-                                      text-navy-900 mb-2">
-                                      {formatDate(day.date)}
-                                    </p>
-                                    <div className="space-y-2">
-                                      {day.entries.map((entry: any) => (
-                                        <div key={entry.id}
-                                          className="text-xs border-b
-                                            border-border pb-2 last:border-0
-                                            last:pb-0">
-                                          <div className="flex justify-between
-                                            items-center">
-                                            <span className="font-medium
-                                              text-navy-900">
-                                              {entry.hours}h
-                                            </span>
-                                            {entry.isBillable && (
-                                              <span className="text-[10px]
-                                                bg-green-100 text-green-700
-                                                px-1.5 py-0.5 rounded-full
-                                                font-medium">
-                                                Billable
-                                              </span>
-                                            )}
-                                          </div>
-                                          <p className="text-muted-foreground
-                                            mt-0.5">
-                                            {entry.project?.name || 'No project'}
-                                          </p>
-                                          {entry.description && (
-                                            <p className="text-muted-foreground
-                                              italic mt-0.5 line-clamp-2">
-                                              {entry.description}
-                                            </p>
-                                          )}
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </>
+                                'text-center text-xs font-semibold',
+                                'uppercase tracking-wide px-1 py-3',
+                                isToday
+                                  ? 'text-brand-600 bg-brand-50'
+                                  : 'text-muted-foreground'
                               )}
-                            </td>
+                              style={{ minWidth: '70px' }}>
+                              <div>{DAYS[i]}</div>
+                              <div className={cn(
+                                'text-[10px] font-normal mt-0.5',
+                                isToday
+                                  ? 'text-brand-500'
+                                  : 'text-muted-foreground'
+                              )}>
+                                {formatShortDate(dateStr)}
+                              </div>
+                            </th>
                           )
                         })}
 
-                        {/* Total */}
-                        <td className="px-4 py-3 text-center">
-                          <span className={cn(
-                            'text-sm font-bold',
-                            row.totalHours > 0
-                              ? 'text-navy-900'
-                              : 'text-gray-300'
+                        {/* Total column */}
+                        <th
+                          className="text-center text-xs font-semibold
+                            text-muted-foreground uppercase tracking-wide
+                            px-2 py-3"
+                          style={{ minWidth: '55px' }}>
+                          Total
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {weeklyData.map((row, rowIndex) => (
+                        <tr key={row.staff.id}
+                          className={cn(
+                            'border-b border-border last:border-0',
+                            rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50/30'
                           )}>
-                            {row.totalHours > 0
-                              ? `${row.totalHours.toFixed(1)}h`
-                              : '—'}
-                          </span>
+
+                          {/* Staff member */}
+                          <td className="px-3 py-3"
+                            style={{ minWidth: '130px', width: '130px' }}>
+                            <div className="flex items-center gap-1.5">
+                              <Avatar
+                                name={`${row.staff.user.firstName} ${row.staff.user.lastName}`}
+                                size="sm"
+                              />
+                              <span
+                                className="text-xs font-medium text-navy-900"
+                                style={{
+                                  maxWidth: '80px',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                  display: 'block'
+                                }}>
+                                {row.staff.user.firstName}{' '}
+                                {row.staff.user.lastName}
+                              </span>
+                            </div>
+                          </td>
+
+                          {/* Day cells */}
+                          {row.days.map((day: any) => {
+                            const cellKey = `${row.staff.id}-${day.date}`
+                            const hasHours = day.hours > 0
+                            const isToday = day.date === todayStr
+                            const isExpanded = expandedCell === cellKey
+
+                            return (
+                              <td key={day.date}
+                                className={cn(
+                                  'px-1 py-3 text-center relative',
+                                  isToday && 'bg-brand-50/50'
+                                )}
+                                style={{ minWidth: '70px' }}>
+                                <button
+                                  onClick={() => hasHours
+                                    ? setExpandedCell(
+                                        isExpanded ? null : cellKey
+                                      )
+                                    : undefined
+                                  }
+                                  className={cn(
+                                    'w-full py-1.5 px-1 rounded-lg text-xs',
+                                    'font-semibold transition-colors',
+                                    hasHours
+                                      ? 'bg-brand-100 text-brand-700 hover:bg-brand-200 cursor-pointer'
+                                      : 'text-gray-300 cursor-default'
+                                  )}>
+                                  {hasHours
+                                    ? `${day.hours.toFixed(1)}h`
+                                    : '—'}
+                                </button>
+
+                                {/* Expanded tooltip */}
+                                {isExpanded && hasHours && (
+                                  <>
+                                    <div className="fixed inset-0 z-10"
+                                      onClick={() => setExpandedCell(null)} />
+                                    <div className="absolute top-full left-1/2
+                                      -translate-x-1/2 mt-1 z-20 bg-white
+                                      rounded-xl border border-border
+                                      shadow-xl p-3 w-52 text-left">
+                                      <p className="text-xs font-semibold
+                                        text-navy-900 mb-2">
+                                        {formatDate(day.date)}
+                                      </p>
+                                      <div className="space-y-2">
+                                        {day.entries.map((entry: any) => (
+                                          <div key={entry.id}
+                                            className="text-xs border-b
+                                              border-border pb-2 last:border-0
+                                              last:pb-0">
+                                            <div className="flex justify-between
+                                              items-center">
+                                              <span className="font-medium
+                                                text-navy-900">
+                                                {entry.hours}h
+                                              </span>
+                                              {entry.isBillable && (
+                                                <span className="text-[10px]
+                                                  bg-green-100 text-green-700
+                                                  px-1.5 py-0.5 rounded-full
+                                                  font-medium">
+                                                  Billable
+                                                </span>
+                                              )}
+                                            </div>
+                                            <p className="text-muted-foreground mt-0.5">
+                                              {entry.project?.name || 'No project'}
+                                            </p>
+                                            {entry.description && (
+                                              <p className="text-muted-foreground
+                                                italic mt-0.5 line-clamp-2">
+                                                {entry.description}
+                                              </p>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </td>
+                            )
+                          })}
+
+                          {/* Row total */}
+                          <td className="px-2 py-3 text-center"
+                            style={{ minWidth: '55px' }}>
+                            <span className={cn(
+                              'text-sm font-bold',
+                              row.totalHours > 0
+                                ? 'text-navy-900'
+                                : 'text-gray-300'
+                            )}>
+                              {row.totalHours > 0
+                                ? `${row.totalHours.toFixed(1)}h`
+                                : '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+
+                      {/* Totals row */}
+                      <tr className="bg-gray-50 border-t-2 border-border">
+                        <td className="px-3 py-3 text-xs font-bold
+                          text-muted-foreground uppercase tracking-wide">
+                          Total
+                        </td>
+                        {weekDates.map(dateStr => {
+                          const dayTotal = weeklyData.reduce((sum, row) => {
+                            const day = row.days.find(
+                              (d: any) => d.date === dateStr
+                            )
+                            return sum + (day?.hours || 0)
+                          }, 0)
+                          const isToday = dateStr === todayStr
+                          return (
+                            <td key={dateStr}
+                              className={cn(
+                                'px-1 py-3 text-center text-xs font-bold',
+                                isToday ? 'text-brand-600' : 'text-navy-900'
+                              )}
+                              style={{ minWidth: '70px' }}>
+                              {dayTotal > 0
+                                ? `${dayTotal.toFixed(1)}h`
+                                : '—'}
+                            </td>
+                          )
+                        })}
+                        <td className="px-2 py-3 text-center text-sm
+                          font-bold text-navy-900"
+                          style={{ minWidth: '55px' }}>
+                          {totalWeekHours.toFixed(1)}h
                         </td>
                       </tr>
-                    ))}
-
-                    {/* Totals row */}
-                    <tr className="bg-gray-50 border-t-2 border-border">
-                      <td className="px-4 py-3 text-xs font-bold
-                        text-muted-foreground uppercase tracking-wide">
-                        Total
-                      </td>
-                      {weekDates.map(dateStr => {
-                        const dayTotal = weeklyData.reduce((sum, row) => {
-                          const day = row.days.find(
-                            (d: any) => d.date === dateStr
-                          )
-                          return sum + (day?.hours || 0)
-                        }, 0)
-                        const isToday = dateStr ===
-                          new Date().toISOString().split('T')[0]
-                        return (
-                          <td key={dateStr}
-                            className={cn(
-                              'px-2 py-3 text-center text-xs font-bold',
-                              isToday ? 'text-brand-600' : 'text-navy-900'
-                            )}>
-                            {dayTotal > 0 ? `${dayTotal.toFixed(1)}h` : '—'}
-                          </td>
-                        )
-                      })}
-                      <td className="px-4 py-3 text-center text-sm font-bold
-                        text-navy-900">
-                        {totalWeekHours.toFixed(1)}h
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </>
         )}
 
-        {/* List view */}
+        {/* ── List view ── */}
         {view === 'list' && (
           <>
             {loading && <SkeletonTable rows={5} cols={6} />}
@@ -582,16 +611,15 @@ export default function TimePage() {
             {!loading && entries.length === 0 && (
               <div className="flex flex-col items-center justify-center
                 py-24 text-center">
-                <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
-                  justify-center mb-6">
+                <div className="w-16 h-16 bg-brand-50 rounded-2xl flex
+                  items-center justify-center mb-6">
                   <Clock className="w-8 h-8 text-brand-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-navy-900 mb-2">
                   No time entries yet
                 </h3>
                 <p className="text-muted-foreground text-sm max-w-sm mb-8">
-                  Start logging time against projects to track
-                  your team's work.
+                  Start logging time against projects to track your team's work.
                 </p>
                 <Button onClick={() => setShowModal(true)}
                   leftIcon={<Plus className="w-4 h-4" />}>
@@ -601,63 +629,75 @@ export default function TimePage() {
             )}
 
             {!loading && entries.length > 0 && (
-              <div className="bg-white rounded-xl border border-border
-                overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-border bg-gray-50">
-                      {['Date', 'Staff', 'Project', 'Hours',
-                        'Description', 'Billable'].map(h => (
-                        <th key={h} className="text-left text-xs font-semibold
-                          text-muted-foreground uppercase tracking-wide
-                          px-4 py-3">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {entries.map((entry, i) => (
-                      <tr key={entry.id}
-                        className={cn(
-                          'border-b border-border last:border-0',
-                          i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                        )}>
-                        <td className="px-4 py-3 text-sm text-navy-900">
-                          {formatDate(entry.entryDate)}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-navy-900">
-                          {entry.staff?.user?.firstName}{' '}
-                          {entry.staff?.user?.lastName}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground">
-                          {entry.project?.name || '—'}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-semibold
-                          text-navy-900">
-                          {entry.hours}h
-                        </td>
-                        <td className="px-4 py-3 text-sm text-muted-foreground
-                          max-w-xs truncate">
-                          {entry.description || '—'}
-                        </td>
-                        <td className="px-4 py-3">
-                          {entry.isBillable ? (
-                            <span className="text-xs bg-green-100 text-green-700
-                              px-2 py-0.5 rounded-full font-medium">
-                              Billable
-                            </span>
-                          ) : (
-                            <span className="text-xs bg-gray-100 text-gray-500
-                              px-2 py-0.5 rounded-full font-medium">
-                              Non-billable
-                            </span>
-                          )}
-                        </td>
+              <div className="rounded-xl border border-border bg-white">
+                <div className="overflow-x-auto rounded-xl"
+                  style={{ WebkitOverflowScrolling: 'touch' }}>
+                  <table style={{ minWidth: '600px', width: '100%' }}>
+                    <thead>
+                      <tr className="border-b border-border bg-gray-50">
+                        {['Date', 'Staff', 'Project', 'Hours',
+                          'Description', 'Billable'].map(h => (
+                          <th key={h}
+                            className="text-left text-xs font-semibold
+                              text-muted-foreground uppercase tracking-wide
+                              px-4 py-3">
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {entries.map((entry, i) => (
+                        <tr key={entry.id}
+                          className={cn(
+                            'border-b border-border last:border-0',
+                            i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
+                          )}>
+                          <td className="px-4 py-3 text-sm text-navy-900">
+                            {formatDate(entry.entryDate)}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-navy-900">
+                            {entry.staff?.user?.firstName}{' '}
+                            {entry.staff?.user?.lastName}
+                          </td>
+                          <td className="px-4 py-3 text-sm
+                            text-muted-foreground">
+                            {entry.project?.name || '—'}
+                          </td>
+                          <td className="px-4 py-3 text-sm font-semibold
+                            text-navy-900">
+                            {entry.hours}h
+                          </td>
+                          <td className="px-4 py-3 text-sm
+                            text-muted-foreground"
+                            style={{
+                              maxWidth: '200px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}>
+                            {entry.description || '—'}
+                          </td>
+                          <td className="px-4 py-3">
+                            {entry.isBillable ? (
+                              <span className="text-xs bg-green-100
+                                text-green-700 px-2 py-0.5 rounded-full
+                                font-medium">
+                                Billable
+                              </span>
+                            ) : (
+                              <span className="text-xs bg-gray-100
+                                text-gray-500 px-2 py-0.5 rounded-full
+                                font-medium">
+                                Non-billable
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
           </>

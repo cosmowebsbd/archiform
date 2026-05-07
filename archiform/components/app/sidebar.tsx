@@ -382,10 +382,7 @@ export default function AppSidebar() {
   return (
     <>
       {/* Desktop sidebar — always visible */}
-      <div className="hidden lg:block fixed left-0 top-0 h-full w-[var(--sidebar-w)]
-        z-30">
-        {sidebarContent}
-      </div>
+      <div className="hidden lg:flex">{sidebarContent}</div>
 
       {/* Mobile overlay backdrop */}
       {isOpen && (
@@ -397,21 +394,24 @@ export default function AppSidebar() {
       )}
 
       {/* Mobile sidebar — slides in */}
-      <div className={cn(
-        'lg:hidden fixed left-0 top-0 h-full w-72 z-50',
-        'transform transition-transform duration-300 ease-in-out',
-        isOpen ? 'translate-x-0' : '-translate-x-full'
-      )}>
+      <div
+        className={cn(
+          "lg:hidden fixed left-0 top-0 h-full w-72 z-50",
+          "transform transition-transform duration-300 ease-in-out",
+          isOpen ? "translate-x-0" : "-translate-x-full",
+        )}
+      >
         {/* Close button */}
         <button
           onClick={close}
           className="absolute top-4 right-4 z-10 w-8 h-8 bg-white/10
             hover:bg-white/20 rounded-lg flex items-center justify-center
-            transition-colors">
+            transition-colors"
+        >
           <X className="w-4 h-4 text-white" />
         </button>
         {sidebarContent}
       </div>
     </>
-  )
+  );
 }

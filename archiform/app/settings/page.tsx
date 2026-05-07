@@ -241,10 +241,11 @@ export default function SettingsPage() {
       </div>
 
       <div className="p-6 max-w-5xl mx-auto">
-        <div className="flex gap-6">
-          {/* Sidebar nav */}
-          <div className="w-52 flex-shrink-0">
-            <nav className="space-y-1">
+        {/* Stack on mobile, side by side on desktop */}
+               <div className="flex flex-col md:flex-row gap-6">
+              {/* Sidebar nav */}
+               <div className="w-full md:w-52 md:flex-shrink-0">
+            <nav className="space-y-1 flex md:flex-col gap-1 overflow-x-auto">
               {tabs.map(tab => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                   className={cn(
@@ -265,7 +266,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Content */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 w-full">
             {saved && (
               <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg
                 text-sm text-green-700 font-medium">
@@ -319,7 +320,7 @@ export default function SettingsPage() {
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input label="Number of employees" type="number"
                       value={firmForm.employeeCount}
                       onChange={e => setFirmForm(f => ({ ...f, employeeCount: e.target.value }))} />
@@ -369,7 +370,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="border-t border-border pt-5 space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Input label="First name *" value={profileForm.firstName}
                       onChange={e => setProfileForm(f => ({ ...f, firstName: e.target.value }))} />
                     <Input label="Last name *" value={profileForm.lastName}
