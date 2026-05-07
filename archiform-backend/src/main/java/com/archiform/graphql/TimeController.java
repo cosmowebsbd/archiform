@@ -12,7 +12,9 @@ import org.springframework.stereotype.Controller;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
-
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 @Controller
 public class TimeController {
     private final TimeEntryService timeEntryService;
@@ -41,5 +43,15 @@ public class TimeController {
         Object v = env.getGraphQlContext().get("firmId");
         if (v == null) throw new UnauthorizedException();
         return UUID.fromString(v.toString());
+    }
+    
+    @QueryMapping
+    public List<Map<String, Object>> weeklyTimesheet(
+            @Argument String weekStart,
+            DataFetchingEnvironment env) {
+        UUID firmId = UUID.fromString(
+                env.getGraphQlContext().get("firmId").toString());
+        LocalDate date = LocalDate.parse(weekStart);
+        return timeEntryService.getWeeklyTimesheet(firmId, date);
     }
 }

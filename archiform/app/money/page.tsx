@@ -1,16 +1,16 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Plus, X, FileText, DollarSign, Download } from 'lucide-react'
+import { Plus, X, FileText, Download } from 'lucide-react'
 import { gql } from '@apollo/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { apolloClient } from '@/lib/apollo-client'
 import { cn, formatCurrency } from '@/lib/utils'
 import { formatDate } from '@/lib/date-utils'
 import { SkeletonTable } from '@/components/ui/skeleton'
-
+import { useRole } from '@/hooks/useRole'
+import ConfirmModal from '@/components/ui/confirm-modal'
 
 const GET_INVOICES = gql`
   query {
@@ -120,9 +120,12 @@ function CreateInvoiceModal({ onClose, onCreated, projects, contacts }: {
         }),
       })
       const json = await response.json()
-      if (json.errors) { setError(json.errors[0]?.message || 'Failed to create invoice'); return }
-      onCreated()
+      if (json.errors) {
+        setError(json.errors[0]?.message || 'Failed to create invoice')
+        return
+      }
       await apolloClient.clearStore()
+      onCreated()
       onClose()
     } catch (err) {
       setError('Connection failed')
@@ -142,8 +145,10 @@ function CreateInvoiceModal({ onClose, onCreated, projects, contacts }: {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between p-6 border-b border-border sticky top-0 bg-white z-10">
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl
+        max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between p-6 border-b border-border
+          sticky top-0 bg-white z-10">
           <h2 className="text-lg font-semibold text-navy-900">Create invoice</h2>
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100">
             <X className="w-4 h-4 text-gray-500" />
@@ -153,21 +158,31 @@ function CreateInvoiceModal({ onClose, onCreated, projects, contacts }: {
         <form onSubmit={handleSubmit} className="p-6 space-y-5" noValidate>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-navy-900 mb-1.5">Project *</label>
-              <select value={form.projectId} onChange={e => setField('projectId', e.target.value)}
+              <label className="block text-sm font-medium text-navy-900 mb-1.5">
+                Project *
+              </label>
+              <select value={form.projectId}
+                onChange={e => setField('projectId', e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg text-sm
                   focus:outline-none focus:ring-2 focus:ring-brand-500">
                 <option value="">Select project</option>
-                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {projects.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-navy-900 mb-1.5">Client</label>
-              <select value={form.contactId} onChange={e => setField('contactId', e.target.value)}
+              <label className="block text-sm font-medium text-navy-900 mb-1.5">
+                Client
+              </label>
+              <select value={form.contactId}
+                onChange={e => setField('contactId', e.target.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg text-sm
                   focus:outline-none focus:ring-2 focus:ring-brand-500">
                 <option value="">No client</option>
-                {contacts.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {contacts.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -178,10 +193,10 @@ function CreateInvoiceModal({ onClose, onCreated, projects, contacts }: {
             <Input label="Due date *" type="date" value={form.dueDate}
               onChange={e => setField('dueDate', e.target.value)} />
             <Input label="Tax rate (%)" type="number" placeholder="0"
-              value={form.taxRate} onChange={e => setField('taxRate', e.target.value)} />
+              value={form.taxRate}
+              onChange={e => setField('taxRate', e.target.value)} />
           </div>
 
-          {/* Line items */}
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-navy-900">Line items</h3>
@@ -197,22 +212,22 @@ function CreateInvoiceModal({ onClose, onCreated, projects, contacts }: {
                     <input value={li.description}
                       onChange={e => setLineItem(i, 'description', e.target.value)}
                       placeholder="Description"
-                      className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                        focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                      className="w-full px-3 py-2 border border-border rounded-lg
+                        text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
                   </div>
                   <div className="col-span-2">
                     <input value={li.quantity} type="number"
                       onChange={e => setLineItem(i, 'quantity', e.target.value)}
                       placeholder="Qty"
-                      className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                        focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                      className="w-full px-3 py-2 border border-border rounded-lg
+                        text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
                   </div>
                   <div className="col-span-3">
                     <input value={li.unitPrice} type="number"
                       onChange={e => setLineItem(i, 'unitPrice', e.target.value)}
                       placeholder="Unit price"
-                      className="w-full px-3 py-2 border border-border rounded-lg text-sm
-                        focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                      className="w-full px-3 py-2 border border-border rounded-lg
+                        text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
                   </div>
                   <div className="col-span-1 flex justify-center">
                     {lineItems.length > 1 && (
@@ -227,7 +242,6 @@ function CreateInvoiceModal({ onClose, onCreated, projects, contacts }: {
             </div>
           </div>
 
-          {/* Totals */}
           <div className="bg-gray-50 rounded-xl p-4 space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Subtotal</span>
@@ -237,14 +251,16 @@ function CreateInvoiceModal({ onClose, onCreated, projects, contacts }: {
               <span className="text-muted-foreground">Tax ({form.taxRate}%)</span>
               <span className="font-medium">{formatCurrency(tax)}</span>
             </div>
-            <div className="flex justify-between text-sm font-bold border-t border-border pt-2">
+            <div className="flex justify-between text-sm font-bold
+              border-t border-border pt-2">
               <span className="text-navy-900">Total</span>
               <span className="text-navy-900">{formatCurrency(total)}</span>
             </div>
           </div>
 
           <Input label="Notes" placeholder="Payment terms, bank details, etc."
-            value={form.notes} onChange={e => setField('notes', e.target.value)} />
+            value={form.notes}
+            onChange={e => setField('notes', e.target.value)} />
 
           {error && <p className="text-sm text-red-500 font-medium">{error}</p>}
 
@@ -264,6 +280,11 @@ export default function MoneyPage() {
   const [contacts, setContacts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: string; number: string
+  } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const { canManageInvoices } = useRole()
 
   const fetchData = () => {
     setLoading(true)
@@ -278,37 +299,60 @@ export default function MoneyPage() {
   }
 
   const handleDownloadPdf = async (invoiceId: string, invoiceNumber: string) => {
-  try {
-    const token = localStorage.getItem('archiform_token')
-    const response = await fetch(
-      `http://localhost:8080/api/invoices/${invoiceId}/pdf`,
-      {
-        method: 'GET',
+    try {
+      const token = localStorage.getItem('archiform_token')
+      const response = await fetch(
+        `http://localhost:8080/api/invoices/${invoiceId}/pdf`,
+        {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${token}` },
+        }
+      )
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(
+        new Blob([blob], { type: 'application/pdf' })
+      )
+      const link = document.createElement('a')
+      link.style.display = 'none'
+      link.href = url
+      link.setAttribute('download', `${invoiceNumber}.pdf`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('PDF download failed:', err)
+      alert('Failed to download PDF. Please try again.')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return
+    setDeleting(true)
+    try {
+      const token = localStorage.getItem('archiform_token')
+      const response = await fetch('http://localhost:8080/graphql', {
+        method: 'POST',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
+        body: JSON.stringify({
+          query: `mutation { deleteInvoice(id: "${confirmDelete.id}") }`
+        }),
+      })
+      const json = await response.json()
+      if (!json.errors) {
+        setInvoices(prev => prev.filter(i => i.id !== confirmDelete.id))
+        setConfirmDelete(null)
       }
-    )
-
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
-
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(
-      new Blob([blob], { type: 'application/pdf' })
-    )
-    const link = document.createElement('a')
-    link.style.display = 'none'
-    link.href = url
-    link.setAttribute('download', `${invoiceNumber}.pdf`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-  } catch (err) {
-    console.error('PDF download failed:', err)
-    alert('Failed to download PDF. Please try again.')
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setDeleting(false)
+    }
   }
-}
 
   useEffect(() => { fetchData() }, [])
 
@@ -332,7 +376,9 @@ export default function MoneyPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          query: `mutation { updateInvoiceStatus(id: "${id}", status: ${status}) { id status } }`
+          query: `mutation {
+            updateInvoiceStatus(id: "${id}", status: ${status}) { id status }
+          }`
         }),
       })
       const json = await response.json()
@@ -347,18 +393,17 @@ export default function MoneyPage() {
       <div className="app-topbar">
         <div className="flex items-center justify-between w-full">
           <h1 className="text-lg font-semibold text-navy-900">Money</h1>
-          <Button
-            onClick={() => setShowModal(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
-            disabled={projects.length === 0}
-          >
-            New invoice
-          </Button>
+          {canManageInvoices && (
+            <Button onClick={() => setShowModal(true)}
+              leftIcon={<Plus className="w-4 h-4" />}
+              disabled={projects.length === 0}>
+              New invoice
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="p-6">
-        {/* Summary cards */}
         <div className="grid grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-xl border border-border p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
@@ -394,13 +439,15 @@ export default function MoneyPage() {
               justify-center mb-6">
               <FileText className="w-8 h-8 text-brand-400" />
             </div>
-            <h3 className="text-xl font-semibold text-navy-900 mb-2">No invoices yet</h3>
+            <h3 className="text-xl font-semibold text-navy-900 mb-2">
+              No invoices yet
+            </h3>
             <p className="text-muted-foreground text-sm max-w-sm mb-8">
               {projects.length === 0
                 ? 'Create a project first before creating invoices.'
                 : 'Create your first invoice to start billing clients.'}
             </p>
-            {projects.length > 0 && (
+            {projects.length > 0 && canManageInvoices && (
               <Button onClick={() => setShowModal(true)}
                 leftIcon={<Plus className="w-4 h-4" />}>
                 Create your first invoice
@@ -427,18 +474,16 @@ export default function MoneyPage() {
                 {invoices.map((invoice, i) => {
                   const cfg = statusConfig[invoice.status] || statusConfig.DRAFT
                   return (
-                    <tr
-                      key={invoice.id}
-                      className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
-                    >
+                    <tr key={invoice.id}
+                      className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
                       <td className="px-4 py-3 text-sm font-medium text-navy-900">
                         {invoice.invoiceNumber}
                       </td>
                       <td className="px-4 py-3 text-sm text-navy-900">
-                        {invoice.project?.name || "—"}
+                        {invoice.project?.name || '—'}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
-                        {invoice.contact?.name || "—"}
+                        {invoice.contact?.name || '—'}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         {formatDate(invoice.issueDate)}
@@ -450,52 +495,56 @@ export default function MoneyPage() {
                         {formatCurrency(invoice.total)}
                       </td>
                       <td className="px-4 py-3">
-                        <span
-                          className={cn(
-                            "text-xs font-semibold px-2 py-0.5 rounded-full",
-                            cfg.bg,
-                            cfg.color,
-                          )}
-                        >
+                        <span className={cn(
+                          'text-xs font-semibold px-2 py-0.5 rounded-full',
+                          cfg.bg, cfg.color
+                        )}>
                           {cfg.label}
                         </span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {invoice.status === "DRAFT" && (
+                          {canManageInvoices && invoice.status === 'DRAFT' && (
                             <button
-                              onClick={() => updateStatus(invoice.id, "SENT")}
-                              className="text-xs text-brand-500 hover:underline font-medium"
-                            >
+                              onClick={() => updateStatus(invoice.id, 'SENT')}
+                              className="text-xs text-brand-500 hover:underline
+                                font-medium">
                               Send
                             </button>
                           )}
-                          {invoice.status === "SENT" && (
+                          {canManageInvoices && invoice.status === 'SENT' && (
                             <button
-                              onClick={() => updateStatus(invoice.id, "PAID")}
-                              className="text-xs text-green-600 hover:underline font-medium"
-                            >
+                              onClick={() => updateStatus(invoice.id, 'PAID')}
+                              className="text-xs text-green-600 hover:underline
+                                font-medium">
                               Mark Paid
                             </button>
                           )}
                           <button
-                            onClick={() =>
-                              handleDownloadPdf(
-                                invoice.id,
-                                invoice.invoiceNumber,
-                              )
-                            }
+                            onClick={() => handleDownloadPdf(
+                              invoice.id, invoice.invoiceNumber
+                            )}
                             className="text-xs text-brand-500 hover:text-brand-600
-                            font-medium flex items-center gap-1"
-                            title="Download PDF"
-                          >
+                              font-medium flex items-center gap-1"
+                            title="Download PDF">
                             <Download className="w-3 h-3" />
                             PDF
                           </button>
+                          {canManageInvoices && invoice.status === 'DRAFT' && (
+                            <button
+                              onClick={() => setConfirmDelete({
+                                id: invoice.id,
+                                number: invoice.invoiceNumber
+                              })}
+                              className="text-xs text-red-400 hover:text-red-600
+                                font-medium">
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
-                  );
+                  )
                 })}
               </tbody>
             </table>
@@ -509,6 +558,17 @@ export default function MoneyPage() {
           onCreated={fetchData}
           projects={projects}
           contacts={contacts}
+        />
+      )}
+
+      {confirmDelete && (
+        <ConfirmModal
+          title="Delete invoice?"
+          message={`Are you sure you want to delete invoice "${confirmDelete.number}"? Only draft invoices can be deleted. This action cannot be undone.`}
+          confirmLabel="Delete invoice"
+          loading={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(null)}
         />
       )}
     </>

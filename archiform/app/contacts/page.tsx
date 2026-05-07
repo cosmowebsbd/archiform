@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input'
 import { Avatar } from '@/components/ui/avatar'
 import { apolloClient } from '@/lib/apollo-client'
 import { SkeletonCard } from '@/components/ui/skeleton'
+import { useRole } from '@/hooks/useRole'
+import ConfirmModal from '@/components/ui/confirm-modal'
 
 const GET_CONTACTS = gql`
   query {
@@ -68,7 +70,10 @@ function AddContactModal({ onClose, onAdded }: {
         }),
       })
       const json = await response.json()
-      if (json.errors) { setError(json.errors[0]?.message || 'Failed to create contact'); return }
+      if (json.errors) {
+        setError(json.errors[0]?.message || 'Failed to create contact')
+        return
+      }
       await apolloClient.clearStore()
       onAdded()
       onClose()
@@ -124,6 +129,11 @@ export default function ContactsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [search, setSearch] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState<{
+    id: string; name: string
+  } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const { canManageProjects } = useRole()
 
   const fetchContacts = () => {
     setLoading(true)
@@ -137,14 +147,9 @@ export default function ContactsPage() {
 
   useEffect(() => { fetchContacts() }, [])
 
-  const filtered = contacts.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) ||
-    c.company?.toLowerCase().includes(search.toLowerCase()) ||
-    c.email?.toLowerCase().includes(search.toLowerCase())
-  )
-
-  const deleteContact = async (id: string) => {
-    if (!confirm('Delete this contact?')) return
+  const handleDelete = async () => {
+    if (!confirmDelete) return
+    setDeleting(true)
     try {
       const token = localStorage.getItem('archiform_token')
       await fetch('http://localhost:8080/graphql', {
@@ -154,37 +159,45 @@ export default function ContactsPage() {
           'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({
-          query: `mutation { deleteContact(id: "${id}") }`
+          query: `mutation { deleteContact(id: "${confirmDelete.id}") }`
         }),
       })
-      setContacts(prev => prev.filter(c => c.id !== id))
-    } catch (err) { console.error(err) }
+      setContacts(prev => prev.filter(c => c.id !== confirmDelete.id))
+      setConfirmDelete(null)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setDeleting(false)
+    }
   }
+
+  const filtered = contacts.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.company?.toLowerCase().includes(search.toLowerCase()) ||
+    c.email?.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <>
       <div className="app-topbar">
         <div className="flex items-center justify-between w-full">
           <h1 className="text-lg font-semibold text-navy-900">Contacts</h1>
-          <Button
-            onClick={() => setShowModal(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
-          >
-            Add contact
-          </Button>
+          {canManageProjects && (
+            <Button onClick={() => setShowModal(true)}
+              leftIcon={<Plus className="w-4 h-4" />}>
+              Add contact
+            </Button>
+          )}
         </div>
       </div>
 
       <div className="p-6">
-        {/* Search */}
         <div className="mb-6">
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+          <input value={search}
+            onChange={e => setSearch(e.target.value)}
             placeholder="Search contacts..."
-            className="w-full max-w-sm px-4 py-2 border border-border rounded-lg text-sm
-              focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
-          />
+            className="w-full max-w-sm px-4 py-2 border border-border rounded-lg
+              text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white" />
         </div>
 
         {loading && (
@@ -197,25 +210,21 @@ export default function ContactsPage() {
 
         {!loading && filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div
-              className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
-              justify-center mb-6"
-            >
+            <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
+              justify-center mb-6">
               <Users className="w-8 h-8 text-brand-400" />
             </div>
             <h3 className="text-xl font-semibold text-navy-900 mb-2">
-              {search ? "No contacts found" : "No contacts yet"}
+              {search ? 'No contacts found' : 'No contacts yet'}
             </h3>
             <p className="text-muted-foreground text-sm max-w-sm mb-8">
               {search
-                ? "Try a different search term."
-                : "Add clients and contacts to assign them to projects and invoices."}
+                ? 'Try a different search term.'
+                : 'Add clients and contacts to assign them to projects and invoices.'}
             </p>
-            {!search && (
-              <Button
-                onClick={() => setShowModal(true)}
-                leftIcon={<Plus className="w-4 h-4" />}
-              >
+            {!search && canManageProjects && (
+              <Button onClick={() => setShowModal(true)}
+                leftIcon={<Plus className="w-4 h-4" />}>
                 Add your first contact
               </Button>
             )}
@@ -225,11 +234,9 @@ export default function ContactsPage() {
         {!loading && filtered.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {filtered.map((contact) => (
-              <div
-                key={contact.id}
+              <div key={contact.id}
                 className="bg-white rounded-xl border border-border p-5
-                  hover:shadow-md transition-all"
-              >
+                  hover:shadow-md transition-all">
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar name={contact.name} size="lg" />
                   <div className="flex-1 min-w-0">
@@ -245,29 +252,33 @@ export default function ContactsPage() {
                       </div>
                     )}
                   </div>
-                  <button
-                    onClick={() => deleteContact(contact.id)}
-                    className="text-xs text-red-400 hover:text-red-600 flex-shrink-0"
-                  >
-                    Delete
-                  </button>
+                  {canManageProjects && (
+                    <button
+                      onClick={() => setConfirmDelete({
+                        id: contact.id, name: contact.name
+                      })}
+                      className="text-xs text-red-400 hover:text-red-600
+                        flex-shrink-0 transition-colors">
+                      Delete
+                    </button>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   {contact.email && (
                     <div className="flex items-center gap-2">
-                      <Mail className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
-                      <a
-                        href={`mailto:${contact.email}`}
-                        className="text-sm text-brand-500 hover:underline truncate"
-                      >
+                      <Mail className="w-3.5 h-3.5 text-muted-foreground
+                        flex-shrink-0" />
+                      <a href={`mailto:${contact.email}`}
+                        className="text-sm text-brand-500 hover:underline truncate">
                         {contact.email}
                       </a>
                     </div>
                   )}
                   {contact.phone && (
                     <div className="flex items-center gap-2">
-                      <Phone className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0" />
+                      <Phone className="w-3.5 h-3.5 text-muted-foreground
+                        flex-shrink-0" />
                       <span className="text-sm text-muted-foreground">
                         {contact.phone}
                       </span>
@@ -275,10 +286,7 @@ export default function ContactsPage() {
                   )}
                   {(contact.city || contact.country) && (
                     <p className="text-xs text-muted-foreground">
-                      📍{" "}
-                      {[contact.city, contact.country]
-                        .filter(Boolean)
-                        .join(", ")}
+                      📍 {[contact.city, contact.country].filter(Boolean).join(', ')}
                     </p>
                   )}
                   {contact.notes && (
@@ -299,6 +307,17 @@ export default function ContactsPage() {
           onAdded={fetchContacts}
         />
       )}
+
+      {confirmDelete && (
+        <ConfirmModal
+          title="Delete contact?"
+          message={`Are you sure you want to delete "${confirmDelete.name}"? This action cannot be undone.`}
+          confirmLabel="Delete contact"
+          loading={deleting}
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      )}
     </>
-  );
+  )
 }

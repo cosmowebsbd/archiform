@@ -1,6 +1,10 @@
 package com.archiform.domain.time;
 
 import com.archiform.domain.firm.FirmRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import com.archiform.domain.project.Phase;
 import com.archiform.domain.project.PhaseRepository;
 import com.archiform.domain.project.Project;
@@ -100,5 +104,51 @@ public class TimeEntryService {
         if (!entry.getFirm().getId().equals(firmId)) throw new UnauthorizedException();
         timeEntryRepository.delete(entry);
         return true;
+    }
+    
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getWeeklyTimesheet(UUID firmId, LocalDate weekStart) {
+        LocalDate weekEnd = weekStart.plusDays(6);
+
+        List<StaffMember> allStaff = staffRepository
+                .findByFirmIdAndActiveTrueOrderByCreatedAtAsc(firmId);
+        List<TimeEntry> entries = timeEntryRepository
+                .findByFirmIdAndDateRange(firmId, weekStart, weekEnd);
+
+        List<Map<String, Object>> rows = new ArrayList<>();
+
+        for (StaffMember staff : allStaff) {
+            List<TimeEntry> staffEntries = entries.stream()
+                    .filter(e -> e.getStaff().getId().equals(staff.getId()))
+                    .collect(java.util.stream.Collectors.toList());
+
+            List<Map<String, Object>> days = new ArrayList<>();
+            double totalHours = 0;
+
+            for (int i = 0; i < 7; i++) {
+                LocalDate date = weekStart.plusDays(i);
+                List<TimeEntry> dayEntries = staffEntries.stream()
+                        .filter(e -> e.getEntryDate().equals(date))
+                        .collect(java.util.stream.Collectors.toList());
+                double hours = dayEntries.stream()
+                        .mapToDouble(e -> e.getHours().doubleValue())
+                        .sum();
+                totalHours += hours;
+
+                Map<String, Object> day = new HashMap<>();
+                day.put("date", date.toString());
+                day.put("hours", hours);
+                day.put("entries", dayEntries);
+                days.add(day);
+            }
+
+            Map<String, Object> row = new HashMap<>();
+            row.put("staff", staff);
+            row.put("days", days);
+            row.put("totalHours", totalHours);
+            rows.add(row);
+        }
+
+        return rows;
     }
 }

@@ -10,6 +10,7 @@ import { Progress } from '@/components/ui/progress'
 import { apolloClient } from '@/lib/apollo-client'
 import { cn, formatCurrency } from '@/lib/utils'
 import { SkeletonCard } from '@/components/ui/skeleton'
+import { useRole } from '@/hooks/useRole'
 
 const GET_STAFF = gql`
   query {
@@ -276,6 +277,7 @@ export default function StaffPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const { canManageStaff } = useRole()
 
   const fetchStaff = () => {
     setLoading(true)
@@ -303,15 +305,23 @@ export default function StaffPage() {
         <div className="flex items-center justify-between w-full">
           <h1 className="text-lg font-semibold text-navy-900">Staff</h1>
           <div className="flex items-center gap-2">
-            <Button variant="outline"
-              onClick={() => setShowInviteModal(true)}
-              leftIcon={<Mail className="w-4 h-4" />}>
-              Invite
-            </Button>
-            <Button onClick={() => setShowModal(true)}
-              leftIcon={<Plus className="w-4 h-4" />}>
-              Add staff member
-            </Button>
+            {canManageStaff && (
+              <Button
+                variant="outline"
+                onClick={() => setShowInviteModal(true)}
+                leftIcon={<Mail className="w-4 h-4" />}
+              >
+                Invite
+              </Button>
+            )}
+            {canManageStaff && (
+              <Button
+                onClick={() => setShowModal(true)}
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
+                Add staff member
+              </Button>
+            )}
           </div>
         </div>
       </div>
@@ -327,30 +337,38 @@ export default function StaffPage() {
 
         {!loading && staff.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
-              justify-center mb-6">
+            <div
+              className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center
+              justify-center mb-6"
+            >
               <Briefcase className="w-8 h-8 text-brand-400" />
             </div>
             <h3 className="text-xl font-semibold text-navy-900 mb-2">
               Build your team
             </h3>
             <p className="text-muted-foreground text-sm max-w-sm mb-8">
-              Add staff members to assign them to projects, track time,
-              and monitor utilization.
+              Add staff members to assign them to projects, track time, and
+              monitor utilization.
             </p>
-            <Button onClick={() => setShowModal(true)}
-              leftIcon={<Plus className="w-4 h-4" />}>
-              Add your first staff member
-            </Button>
+            {canManageStaff && (
+              <Button
+                onClick={() => setShowModal(true)}
+                leftIcon={<Plus className="w-4 h-4" />}
+              >
+                Add your first staff member
+              </Button>
+            )}
           </div>
         )}
 
         {!loading && staff.length > 0 && (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {staff.map((member) => (
-              <div key={member.id}
+              <div
+                key={member.id}
                 className="bg-white rounded-xl border border-border p-5
-                  hover:shadow-md transition-all">
+                  hover:shadow-md transition-all"
+              >
                 <div className="flex items-start gap-3 mb-4">
                   <Avatar
                     name={`${member.user.firstName} ${member.user.lastName}`}
@@ -361,7 +379,7 @@ export default function StaffPage() {
                       {member.user.firstName} {member.user.lastName}
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                      {member.title || 'No title'}
+                      {member.title || "No title"}
                     </p>
                     <div className="flex items-center gap-1 mt-1">
                       <Mail className="w-3 h-3 text-muted-foreground" />
@@ -382,14 +400,16 @@ export default function StaffPage() {
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-xs text-muted-foreground">Department</p>
                     <p className="text-sm font-semibold text-navy-900 mt-0.5">
-                      {member.department || '—'}
+                      {member.department || "—"}
                     </p>
                   </div>
                 </div>
 
                 <div>
-                  <div className="flex justify-between text-xs
-                    text-muted-foreground mb-1.5">
+                  <div
+                    className="flex justify-between text-xs
+                    text-muted-foreground mb-1.5"
+                  >
                     <span>Target utilization</span>
                     <span>{member.targetUtilization}%</span>
                   </div>
@@ -397,7 +417,9 @@ export default function StaffPage() {
                     value={member.targetUtilization}
                     max={100}
                     size="sm"
-                    variant={member.targetUtilization >= 90 ? 'warning' : 'success'}
+                    variant={
+                      member.targetUtilization >= 90 ? "warning" : "success"
+                    }
                   />
                 </div>
               </div>
@@ -420,5 +442,5 @@ export default function StaffPage() {
         />
       )}
     </>
-  )
+  );
 }

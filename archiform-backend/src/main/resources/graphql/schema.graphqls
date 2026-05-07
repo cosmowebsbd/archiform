@@ -178,6 +178,7 @@ type Query {
     contact(id: ID!):   Contact!
     invitations: [Invitation!]!
     invitationByToken(token: String!): InvitationInfo!
+    weeklyTimesheet(weekStart: String!): [WeeklyStaffRow!]!
 }
 
 type Mutation {
@@ -234,6 +235,18 @@ type InvitationInfo {
     inviterName: String!
     isExpired: Boolean!
     isAccepted: Boolean!
+}
+
+type WeeklyStaffRow {
+    staff: StaffMember!
+    days: [DayEntry!]!
+    totalHours: Float!
+}
+
+type DayEntry {
+    date: String!
+    hours: Float!
+    entries: [TimeEntry!]!
 }
 
 input RegisterInput {

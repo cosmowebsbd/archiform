@@ -1,13 +1,13 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Building2, ArrowRight, Eye, EyeOff, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-export default function AcceptInvitePage() {
+function AcceptInviteContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const token = searchParams.get('token')
@@ -24,7 +24,6 @@ export default function AcceptInvitePage() {
     confirmPassword: '',
   })
 
-  // Load invitation info
   useEffect(() => {
     if (!token) {
       setError('Invalid invitation link.')
@@ -123,7 +122,8 @@ export default function AcceptInvitePage() {
     <div className="min-h-screen bg-[#f4f5f9] flex flex-col">
       <div className="flex justify-center pt-8 pb-6">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-navy-900 rounded-xl flex items-center justify-center">
+          <div className="w-9 h-9 bg-navy-900 rounded-xl flex items-center
+            justify-center">
             <Building2 className="w-5 h-5 text-white" />
           </div>
           <span className="text-2xl font-semibold text-navy-900"
@@ -163,7 +163,6 @@ export default function AcceptInvitePage() {
 
           {!loading && inviteInfo && (
             <>
-              {/* Invite info */}
               <div className="text-center mb-8">
                 <div className="w-14 h-14 bg-brand-50 rounded-2xl flex items-center
                   justify-center mx-auto mb-4">
@@ -250,5 +249,18 @@ export default function AcceptInvitePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-[#f4f5f9] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-brand-500 border-t-transparent
+          rounded-full animate-spin" />
+      </div>
+    }>
+      <AcceptInviteContent />
+    </Suspense>
   )
 }

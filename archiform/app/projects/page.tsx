@@ -15,6 +15,7 @@ import { apolloClient } from '@/lib/apollo-client'
 import { cn, formatCurrency } from '@/lib/utils'
 import ConfirmModal from '@/components/ui/confirm-modal'
 import { SkeletonProjectRow, SkeletonPageHeader } from '@/components/ui/skeleton'
+import { useRole } from '@/hooks/useRole'
 
 const GET_PROJECTS = gql`
   query {
@@ -222,6 +223,7 @@ export default function ProjectsPage() {
   const [confirmDelete, setConfirmDelete] = useState<{
     id: string; name: string
   } | null>(null)
+  const { canManageProjects } = useRole()
 
   const fetchProjects = () => {
     setLoading(true)
@@ -472,18 +474,20 @@ export default function ProjectsPage() {
                     </div>
 
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() =>
-                          setConfirmDelete({
-                            id: project.id,
-                            name: project.name,
-                          })
-                        }
-                        className="text-xs text-red-400 hover:text-red-600
-                          transition-colors px-2 py-1 rounded hover:bg-red-50"
-                      >
-                        Delete
-                      </button>
+                      {canManageProjects && (
+                        <button
+                          onClick={() =>
+                            setConfirmDelete({
+                              id: project.id,
+                              name: project.name,
+                            })
+                          }
+                          className="text-xs text-red-400 hover:text-red-600
+      transition-colors px-2 py-1 rounded hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      )}
                       <Link href={`/projects/${project.id}`}>
                         <ArrowRight
                           className="w-4 h-4 text-muted-foreground
@@ -516,6 +520,17 @@ export default function ProjectsPage() {
           onCancel={() => setConfirmDelete(null)}
         />
       )}
+
+      {canManageProjects && (
+        <Button
+          onClick={() => setShowModal(true)}
+          leftIcon={<Plus className="w-4 h-4" />}
+        >
+          New project
+        </Button>
+      )}
+
+      
     </>
   );
 }
